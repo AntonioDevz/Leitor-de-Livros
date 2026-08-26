@@ -88,7 +88,7 @@ export default function UploadPage() {
 
       await saveBook(book);
 
-      router.push(`/book/${book.id}`);
+      router.push(`/book/?id=${book.id}`);
     } catch (err) {
       console.error(err);
       setError('Não foi possível processar este PDF. Verifique se o arquivo não está corrompido ou protegido.');

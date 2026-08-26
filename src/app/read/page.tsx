@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
-import type { Book, ReaderSettings, Bookmark } from '@/types';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { Book, Bookmark } from '@/types';
 import { getBook } from '@/lib/db';
 import { useReader } from '@/hooks/useReader';
 import { getTheme } from '@/lib/themes';
@@ -12,9 +12,10 @@ import ReaderSettingsPanel from '@/components/reader/ReaderSettingsPanel';
 import PageContent from '@/components/reader/PageContent';
 import SidebarPanel from '@/components/reader/SidebarPanel';
 
-export default function ReaderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function ReaderContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const bookId = searchParams.get('id');
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
@@ -26,16 +27,19 @@ export default function ReaderPage({ params }: { params: Promise<{ id: string }>
   const reader = useReader(book);
 
   useEffect(() => {
-    getBook(id).then((b) => {
+    if (!bookId) {
+      setLoading(false);
+      return;
+    }
+    getBook(bookId).then((b) => {
       setBook(b || null);
       setLoading(false);
     });
-  }, [id]);
+  }, [bookId]);
 
   useEffect(() => {
     if (!book) return;
-    const urlParams = new URLSearchParams(window.location.search);
-    const page = urlParams.get('page');
+    const page = searchParams.get('page');
     if (page) {
       reader.goToPage(parseInt(page));
     }
@@ -107,12 +111,12 @@ export default function ReaderPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  if (!book) {
+  if (!book || !bookId) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
         <div className="text-center">
           <p className="text-lg mb-4">Livro não encontrado</p>
-          <button onClick={() => router.push('/library')} className="text-blue-400 hover:underline">
+          <button onClick={() => router.push('/library/')} className="text-blue-400 hover:underline">
             Voltar à biblioteca
           </button>
         </div>
@@ -150,7 +154,7 @@ export default function ReaderPage({ params }: { params: Promise<{ id: string }>
           totalPages={reader.totalPages}
           progress={reader.progress}
           currentChapter={currentChapter?.title}
-          onBack={() => router.push(`/book/${id}`)}
+          onBack={() => router.push(`/book/?id=${bookId}`)}
           onSettings={() => setShowSettings(!showSettings)}
           onBookmark={() => reader.addBookmark()}
           isBookmarked={reader.bookmarks.some((b) => b.pageNumber === reader.currentPage)}
@@ -298,5 +302,17 @@ export default function ReaderPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
     </div>
+  );
+}
+
+export default function ReadPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <ReaderContent />
+    </Suspense>
   );
 }

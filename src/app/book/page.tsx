@@ -1,21 +1,26 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Book } from '@/types';
 import { getBook, deleteBook } from '@/lib/db';
 import Navbar from '@/components/ui/Navbar';
 import { formatFileSize, formatDate } from '@/lib/utils';
 
-export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+function BookContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const id = searchParams.get('id');
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [lastPage, setLastPage] = useState(0);
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     getBook(id).then((b) => {
       setBook(b || null);
       setLoading(false);
@@ -31,11 +36,26 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   }, [id]);
 
   const handleDelete = async () => {
+    if (!id) return;
     if (confirm('Tem certeza que deseja excluir este livro?')) {
       await deleteBook(id);
-      router.push('/library');
+      router.push('/library/');
     }
   };
+
+  if (!id) {
+    return (
+      <main className="min-h-screen bg-slate-50">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-6 pt-24 pb-12 text-center">
+          <h2 className="text-xl font-medium text-slate-900 mb-4">Nenhum livro selecionado</h2>
+          <button onClick={() => router.push('/library/')} className="text-blue-600 hover:underline">
+            Voltar à biblioteca
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   if (loading) {
     return (
@@ -47,7 +67,6 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             <div className="flex-1 space-y-4">
               <div className="h-8 bg-slate-200 rounded w-3/4" />
               <div className="h-4 bg-slate-200 rounded w-1/2" />
-              <div className="h-4 bg-slate-200 rounded w-1/3" />
             </div>
           </div>
         </div>
@@ -61,7 +80,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
         <Navbar />
         <div className="max-w-4xl mx-auto px-6 pt-24 pb-12 text-center">
           <h2 className="text-xl font-medium text-slate-900 mb-4">Livro não encontrado</h2>
-          <button onClick={() => router.push('/library')} className="text-blue-600 hover:underline">
+          <button onClick={() => router.push('/library/')} className="text-blue-600 hover:underline">
             Voltar à biblioteca
           </button>
         </div>
@@ -74,7 +93,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       <Navbar />
       <div className="max-w-4xl mx-auto px-6 pt-24 pb-12">
         <button
-          onClick={() => router.push('/library')}
+          onClick={() => router.push('/library/')}
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-6 transition-colors"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,7 +148,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
 
             <div className="flex flex-wrap gap-3 mb-8">
               <button
-                onClick={() => router.push(`/book/${id}/read`)}
+                onClick={() => router.push(`/read/?id=${id}`)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -144,7 +163,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                     localStorage.removeItem(`bf-progress-${id}`);
                     setProgress(0);
                     setLastPage(0);
-                    router.push(`/book/${id}/read`);
+                    router.push(`/read/?id=${id}`);
                   }}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl font-medium border border-slate-200 hover:bg-slate-50 transition-colors"
                 >
@@ -166,12 +185,6 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 </svg>
                 {book.originalPdfName}
               </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                Modo {book.conversionMode === 'reflow' ? 'Reflow' : 'Preservação'}
-              </div>
             </div>
 
             {book.chapters.length > 0 && (
@@ -181,7 +194,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                   {book.chapters.map((ch, i) => (
                     <button
                       key={ch.id}
-                      onClick={() => router.push(`/book/${id}/read?page=${ch.pageNumber}`)}
+                      onClick={() => router.push(`/read/?id=${id}&page=${ch.pageNumber}`)}
                       className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-white transition-colors text-left group"
                     >
                       <span className="text-xs text-slate-400 font-mono w-6">{String(i + 1).padStart(2, '0')}</span>
@@ -205,5 +218,17 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
     </main>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+      </main>
+    }>
+      <BookContent />
+    </Suspense>
   );
 }

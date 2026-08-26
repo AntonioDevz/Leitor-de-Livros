@@ -21,7 +21,7 @@ function BookCard({ book }: { book: Book }) {
   }, [book.id]);
 
   return (
-    <Link href={`/book/${book.id}`} className="group block">
+    <Link href={`/book/?id=${book.id}`} className="group block">
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-100 book-card-shadow mb-3">
         {book.coverImage ? (
           <img
@@ -184,7 +184,7 @@ export default function LibraryPage() {
             {books.map((book) => (
               <Link
                 key={book.id}
-                href={`/book/${book.id}`}
+                href={`/book/?id=${book.id}`}
                 className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-100 hover:border-slate-200 transition-all"
               >
                 <div className="w-12 h-16 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
