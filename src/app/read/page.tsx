@@ -357,7 +357,7 @@ function ReaderContent() {
   return (
     <div
       className={`h-dvh relative overflow-hidden flex flex-col transition-colors duration-300 ${themeClass} ${reader.showControls ? 'controls-visible' : ''}`}
-      style={{ background: theme.background, color: theme.foreground }}
+      style={{ background: theme.background, color: theme.foreground, overscrollBehavior: 'none' }}
     >
       {reader.showControls && (
         <div className="absolute inset-x-0 top-0 z-20 animate-slide-down">
@@ -382,7 +382,7 @@ function ReaderContent() {
 
       <div
         ref={stageRef}
-        className="reader-stage"
+        className={`reader-stage ${pageMode === 'scroll' ? 'reader-stage--scroll' : ''}`}
         style={{ touchAction: pageMode === 'scroll' ? 'pan-y' : 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

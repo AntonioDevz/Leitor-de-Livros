@@ -168,6 +168,21 @@ h1, h2, h3, h4, .font-display, .display-serif {
   -webkit-touch-callout: none;
 }
 
+/* The browser's effective touch-action is the intersection of the target and
+   its ancestors. Without this, the text nodes inside the page keep `auto` and
+   Chrome/iOS grabs a single-finger drag as a scroll, firing pointercancel on
+   the first finger (only two fingers slipped through). Force none everywhere
+   inside the flip stage so one finger owns the gesture. */
+.reader-stage,
+.reader-stage * {
+  touch-action: none;
+}
+
+.reader-stage--scroll,
+.reader-stage--scroll * {
+  touch-action: pan-y;
+}
+
 /* Ambient lighting around the page (book resting on a surface) */
 .stage-ambient {
   position: absolute;
