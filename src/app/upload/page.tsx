@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/ui/Navbar';
+import SiteFooter from '@/components/ui/SiteFooter';
 import { processPdf } from '@/lib/pdf-processor';
 import { convertToBook } from '@/lib/book-converter';
 import { saveBook } from '@/lib/db';
@@ -281,6 +282,7 @@ export default function UploadPage() {
           )}
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }

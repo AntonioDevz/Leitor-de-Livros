@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { Book } from '@/types';
 import { getBook, deleteBook } from '@/lib/db';
 import Navbar from '@/components/ui/Navbar';
+import SiteFooter from '@/components/ui/SiteFooter';
 import { TypographicCover } from '@/components/library/BookCard';
 import { formatFileSize, formatDate, cn } from '@/lib/utils';
 import { ArrowLeft, BookOpen, Play, RotateCcw, Clock, Calendar, Trash2, ListTree, FolderOpen, Heart, FileText } from 'lucide-react';
@@ -46,9 +47,12 @@ function BookContent() {
   };
 
   const LoadingShell = ({ children }: { children: React.ReactNode }) => (
-    <main className="min-h-screen bg-[#faf7f1]">
+    <main className="min-h-screen bg-[#faf7f1] flex flex-col">
       <Navbar />
       {children}
+      <div className="mt-auto">
+        <SiteFooter />
+      </div>
     </main>
   );
 
@@ -113,7 +117,7 @@ function BookContent() {
   return (
     <main className="min-h-screen bg-[#faf7f1]">
       <Navbar />
-      <div className="pt-24 pb-16">
+      <div className="pt-24 pb-16 relative">
         {/* Editorial backdrop */}
         <div className="absolute inset-x-0 top-0 h-[340px] bg-gradient-to-b from-[#f1eadf] to-transparent pointer-events-none" />
 
@@ -275,6 +279,7 @@ function BookContent() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }

@@ -41,6 +41,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -51,6 +52,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
 }
 
 h1, h2, h3, h4, .font-display, .display-serif {
@@ -138,6 +141,12 @@ h1, h2, h3, h4, .font-display, .display-serif {
   0%, 100% { transform: scale(1) translate(0, 0); }
   33% { transform: scale(1.08) translate(2%, -2%); }
   66% { transform: scale(1.05) translate(-2%, 2%); }
+}
+
+@keyframes conversionFill {
+  0% { transform: translateX(0); width: 18%; }
+  50% { transform: translateX(60%); width: 42%; }
+  100% { transform: translateX(100%); width: 18%; }
 }
 
 .animate-fade-in { animation: fadeIn 0.35s ease-out; }

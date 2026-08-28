@@ -19,7 +19,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-nav">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-nav safe-top">
       <div className="max-w-6xl mx-auto px-5 md:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative w-9 h-9 rounded-xl flex items-center justify-center bg-[#221d17] shadow-md transition-transform group-hover:scale-105">
@@ -85,7 +85,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#e6ddd0] bg-[#faf7f1] px-5 py-4 animate-slide-down">
+        <div className="md:hidden border-t border-[#e6ddd0] bg-[#faf7f1] px-5 pt-4 pb-6 animate-slide-down shadow-[0_16px_30px_rgba(34,29,23,0.12)]">
           <div className="space-y-1">
             {navLinks.map((link) => (
               <Link

@@ -51,33 +51,36 @@ export default function Features() {
   return (
     <>
       {/* How it works */}
-      <section className="py-20 bg-[#f1eadf]">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-12">
+      <section className="py-20 lg:py-24 bg-[#f1eadf]">
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-14">
             Como funciona
           </p>
-          <div className="grid md:grid-cols-3 gap-10">
-            {steps.map((step) => (
-              <div key={step.n} className="relative text-center md:text-left group">
-                <div className="font-serif text-5xl font-semibold text-[#bb7a1c]/25 transition-colors group-hover:text-[#bb7a1c]/40">
-                  {step.n}
+          <div className="relative">
+            <div className="hidden md:block absolute top-6 left-[16.67%] right-[16.67%] h-px bg-gradient-to-r from-transparent via-[#d8ccb9] to-transparent" aria-hidden />
+            <div className="grid md:grid-cols-3 gap-12 md:gap-8">
+              {steps.map((step) => (
+                <div key={step.n} className="relative flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-white border border-[#e6ddd0] shadow-sm flex items-center justify-center font-serif text-lg font-semibold text-[#bb7a1c]">
+                    {step.n}
+                  </div>
+                  <h3 className="font-serif text-xl font-semibold text-[#221d17] mt-5 mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-[#8b8174] text-[15px] leading-relaxed max-w-[16rem]">
+                    {step.desc}
+                  </p>
                 </div>
-                <h3 className="font-serif text-xl font-semibold text-[#221d17] mt-2 mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-[#8b8174] text-[15px] leading-relaxed max-w-xs md:mx-0 mx-auto">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-[#faf7f1]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+      <section className="py-20 lg:py-24 bg-[#faf7f1]">
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <div className="text-center mb-14">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-4">
               Recursos
             </p>
@@ -89,11 +92,11 @@ export default function Features() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map(({ icon: Icon, title, description }, i) => (
               <div
                 key={title}
-                className="group relative p-7 rounded-2xl bg-[#faf7f1] border border-[#e6ddd0] hover:border-[#d8ccb9] hover:bg-white transition-all duration-300 animate-slide-up"
+                className="group relative p-7 rounded-2xl bg-white border border-[#e6ddd0] hover:border-[#d8ccb9] hover:shadow-[0_12px_32px_rgba(34,29,23,0.08)] transition-all duration-300 animate-slide-up h-full flex flex-col"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <div className="absolute inset-x-7 top-0 h-[2px] rounded-full bg-[#bb7a1c] opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100 transition-all duration-300 origin-center" />

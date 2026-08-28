@@ -1,7 +1,10 @@
 import Hero from '@/components/landing/Hero';
 import Features from '@/components/landing/Features';
 import Navbar from '@/components/ui/Navbar';
+import SiteFooter from '@/components/ui/SiteFooter';
 import Link from 'next/link';
+
+const ctaPoints = ['100% local', 'Sem cadastro', 'Até 200MB por livro', 'Funciona offline'];
 
 export default function HomePage() {
   return (
@@ -10,15 +13,18 @@ export default function HomePage() {
       <Hero />
       <Features />
       <section className="relative py-28 overflow-hidden bg-[#221d17]">
-        <div className="absolute -top-32 left-1/4 w-[420px] h-[420px] rounded-full opacity-30"
+        <div className="absolute -top-32 left-1/4 w-[420px] h-[420px] rounded-full opacity-30 pointer-events-none"
           style={{ background: 'radial-gradient(circle, #bb7a1c 0%, transparent 65%)' }} />
-        <div className="absolute -bottom-40 right-1/5 w-[360px] h-[360px] rounded-full opacity-20"
+        <div className="absolute -bottom-40 right-1/5 w-[360px] h-[360px] rounded-full opacity-20 pointer-events-none"
           style={{ background: 'radial-gradient(circle, #6b9db8 0%, transparent 65%)' }} />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[#d9a441] text-xs font-medium tracking-wide mb-8">
+            Gratuito · Sem limites
+          </span>
           <h2 className="font-serif text-4xl md:text-5xl font-semibold text-[#e9dfcd] tracking-tight mb-5">
-            Comece agora
+            Pronto para criar sua biblioteca?
           </h2>
-          <p className="text-lg text-[#8b8174] mb-10 font-light">
+          <p className="text-lg text-[#9a9083] mb-10 font-light">
             Faça upload de um PDF e veja a mágica acontecer. Seus livros ficam salvos,
             offline, direto no seu navegador.
           </p>
@@ -31,14 +37,19 @@ export default function HomePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </Link>
+          <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-2.5 text-[13px] text-[#8b8174]">
+            {ctaPoints.map((point) => (
+              <span key={point} className="inline-flex items-center gap-2">
+                <svg className="w-3 h-3 text-[#bb7a1c]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                {point}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
-      <footer className="py-10 bg-[#1a1612] border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-[#6d6355]">
-          <span className="font-serif text-[15px] text-[#8b8174]">Bookflow</span>
-          <span>&copy; {new Date().getFullYear()} — Edições digitais com carinho.</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

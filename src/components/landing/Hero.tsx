@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { FileText, ArrowRight, BookOpen } from 'lucide-react';
 
 const PALETTES = [
   ['#3d2e1d', '#bb7a1c'],
@@ -11,37 +12,79 @@ const PALETTES = [
   ['#8b3a2f', '#d99a7a'],
 ];
 
+function PdfMini({ color }: { color: string }) {
+  return (
+    <div
+      className="relative w-[118px] shrink-0 aspect-[2/3] rounded-lg overflow-hidden shadow-[0_6px_18px_rgba(34,29,23,0.22)]"
+      style={{ background: color }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white/12 to-transparent p-3.5 border border-white/10 flex flex-col">
+        <div className="w-7 h-1.5 rounded-full bg-white/25 mb-3" />
+        <div className="space-y-1.5 flex-1">
+          {[90, 68, 82, 56, 72].map((w, i) => (
+            <div key={i} className="h-1 rounded-full" style={{ width: `${w}%`, background: 'rgba(255,255,255,0.16)' }} />
+          ))}
+        </div>
+        <div className="h-px bg-white/20 mt-3 mb-2" />
+        <div className="w-9 h-1.5 rounded-full bg-white/20" />
+      </div>
+    </div>
+  );
+}
+
+function BookMini({ from, to }: { from: string; to: string }) {
+  return (
+    <div
+      className="relative w-[118px] shrink-0 aspect-[2/3] rounded-r-[8px] rounded-l-[4px] overflow-hidden shadow-[0_6px_18px_rgba(34,29,23,0.22)]"
+      style={{ background: `linear-gradient(135deg, ${from} 0%, ${to} 100%)` }}
+    >
+      <div className="absolute inset-y-0 left-0 w-[6px] book-spine" style={{ background: 'rgba(0,0,0,0.22)' }} />
+      <div className="absolute inset-0 p-3.5 flex flex-col">
+        <div className="w-6 h-6 rounded-md bg-white/15 flex items-center justify-center mb-auto">
+          <BookOpen className="w-3.5 h-3.5 text-white/80" strokeWidth={1.8} />
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-1.5 rounded-full bg-white/40 w-full" />
+          <div className="h-1.5 rounded-full bg-white/30 w-4/5" />
+        </div>
+        <div className="mt-2 h-px bg-white/20" />
+        <div className="h-1.5 rounded-full bg-white/25 w-1/2 mt-1.5" />
+      </div>
+    </div>
+  );
+}
+
 export default function Hero() {
   const [palette, setPalette] = useState(PALETTES[0]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setPalette((prev) => PALETTES[(PALETTES.indexOf(prev) + 1) % PALETTES.length]);
-    }, 3800);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <section className="relative min-h-[92vh] flex items-center overflow-hidden bg-[#faf7f1]">
       {/* Ambient glows */}
-      <div className="absolute -top-40 -right-40 w-[560px] h-[560px] rounded-full opacity-[0.07]"
+      <div className="absolute -top-40 -right-40 w-[560px] h-[560px] rounded-full opacity-[0.07] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #bb7a1c 0%, transparent 65%)', animation: 'bgShift 18s ease-in-out infinite' }} />
-      <div className="absolute -bottom-48 -left-40 w-[560px] h-[560px] rounded-full opacity-[0.05]"
+      <div className="absolute -bottom-48 -left-40 w-[560px] h-[560px] rounded-full opacity-[0.05] pointer-events-none"
         style={{ background: 'radial-gradient(circle, #6b9db8 0%, transparent 65%)', animation: 'bgShift 22s ease-in-out infinite' }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 py-24 grid lg:grid-cols-[1.15fr_1fr] gap-14 items-center">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-5 md:px-8 py-24 grid lg:grid-cols-[1.12fr_1fr] gap-14 lg:gap-16 items-center">
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6e8cf] text-[#96600f] text-xs font-medium tracking-wide mb-7 animate-fade-in">
             <span className="w-1.5 h-1.5 rounded-full bg-[#bb7a1c]" />
             Plataforma de livros digitais
           </div>
 
-          <h1 className="font-serif text-[2.75rem] leading-[1.08] md:text-6xl text-[#221d17] font-semibold tracking-tight mb-6">
+          <h1 className="font-serif text-[2.6rem] leading-[1.06] sm:text-5xl lg:text-[3.6rem] text-[#221d17] font-semibold tracking-tight mb-6">
             Transforme seus{' '}
             <span className="italic text-[#bb7a1c]">PDFs</span> em livros{' '}
             <span className="relative inline-block">
               digitais
-              <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" preserveAspectRatio="none">
+              <svg className="absolute -bottom-2 left-0 w-full" height="8" viewBox="0 0 200 8" preserveAspectRatio="none" aria-hidden>
                 <path d="M2 6C60 2 140 2 198 5" stroke="#bb7a1c" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.5" />
               </svg>
             </span>
@@ -52,7 +95,7 @@ export default function Hero() {
             moderna, responsiva e interativa — com o acabamento das grandes editoras.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3.5 mb-12">
+          <div className="flex flex-col sm:flex-row gap-3.5 mb-8">
             <Link
               href="/upload"
               className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#221d17] text-[#e9dfcd] font-medium text-[15px] shadow-lg shadow-[#221d17]/15 hover:bg-[#3a322a] hover:-translate-y-0.5 transition-all duration-200"
@@ -70,7 +113,7 @@ export default function Hero() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-8 text-[#8b8174]">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-[#8b8174]">
             <div>
               <p className="font-serif text-2xl text-[#221d17] font-semibold">100%</p>
               <p className="text-xs tracking-wide mt-0.5">offline-first</p>
@@ -86,88 +129,89 @@ export default function Hero() {
               <p className="text-xs tracking-wide mt-0.5">páginas</p>
             </div>
           </div>
+
+          {/* Compact transformation strip (mobile/tablet) */}
+          <div className="lg:hidden mt-8 animate-slide-up">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[#e6ddd0] bg-white p-3 shadow-sm">
+              <div className="w-11 h-14 rounded-lg flex items-center justify-center shadow-md" style={{ background: palette[0] }}>
+                <FileText className="w-5 h-5 text-white/90" strokeWidth={1.8} />
+              </div>
+              <div className="flex items-center gap-1.5 px-2">
+                <div className="h-px flex-1 bg-[#d8ccb9]" />
+                <ArrowRight className="w-4 h-4 text-[#bb7a1c]" />
+                <div className="h-px flex-1 bg-[#d8ccb9]" />
+              </div>
+              <div className="w-11 h-14 rounded-lg flex items-center justify-center shadow-md" style={{ background: `linear-gradient(135deg, ${palette[1]} 0%, ${palette[0]} 100%)` }}>
+                <BookOpen className="w-5 h-5 text-white/90" strokeWidth={1.8} />
+              </div>
+            </div>
+            <p className="text-center text-xs text-[#8b8174] mt-2.5">
+              Seu PDF vira um livro digital imediatamente — sem servidores.
+            </p>
+          </div>
         </div>
 
-        {/* Book transformation showcase */}
-        <div className="relative hidden lg:block" aria-hidden>
-          <div className="relative mx-auto w-[320px] h-[360px]">
-            {/* PDF document */}
-            <div className="absolute top-6 left-6 w-[210px] h-[280px] rounded-[8px] shadow-2xl"
-              style={{ background: palette[0] }}>
-              <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent rounded-[8px] p-6 border border-white/10">
-                <div className="w-14 h-2 rounded-full bg-white/25 mb-3" />
-                <div className="space-y-1.5">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-1.5 rounded-full" style={{ width: `${[80, 65, 90, 55, 70][i]}%`, background: 'rgba(255,255,255,0.16)' }} />
-                  ))}
+        {/* Conversion panel (desktop) */}
+        <div className="hidden lg:block animate-fade-in" style={{ animationDelay: '120ms' }}>
+          <div className="relative mx-auto w-full max-w-[400px]">
+            <div className="absolute -inset-8 rounded-[2.5rem] bg-gradient-to-br from-[#f6e8cf] via-transparent to-[#e3e9ea]/70 blur-2xl opacity-80 pointer-events-none" aria-hidden />
+            <div className="relative rounded-[1.6rem] bg-white border border-[#e6ddd0] shadow-[0_30px_90px_rgba(34,29,23,0.16)] overflow-hidden">
+              <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-[#f1eadf]">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-[#f6e8cf] flex items-center justify-center">
+                    <FileText className="w-3.5 h-3.5 text-[#bb7a1c]" strokeWidth={2} />
+                  </span>
+                  <span className="text-sm font-medium text-[#221d17]">Conversão instantânea</span>
                 </div>
-                <div className="absolute bottom-6 left-6 right-6">
-                  <div className="h-px bg-white/20 mb-2" />
-                  <div className="w-9 h-2 rounded-full bg-white/20 mb-1.5" />
-                  <div className="w-16 h-2 rounded-full bg-white/15" />
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#96600f] bg-[#f6e8cf] px-2.5 py-1 rounded-full">
+                  <span className="w-1 h-1 rounded-full bg-[#bb7a1c]" />
+                  100% local
+                </span>
+              </div>
+
+              <div className="p-6 pt-5">
+                <div className="flex items-center gap-4">
+                  <PdfMini color={palette[0]} />
+                  <div className="flex-1 flex flex-col items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-[#221d17] text-[#d9a441] flex items-center justify-center shadow-md" style={{ transition: 'background 0.4s ease' }}>
+                      <ArrowRight className="w-4 h-4" strokeWidth={2.2} />
+                    </span>
+                    <div className="relative h-[2px] w-full overflow-hidden rounded-full bg-[#f1eadf]">
+                      <div className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-gradient-to-r from-[#bb7a1c] to-[#d9a441]" style={{ animation: 'conversionFill 2.6s ease-in-out infinite' }} />
+                    </div>
+                    <span className="text-[10px] text-[#8b8174] tracking-wide">processando local</span>
+                  </div>
+                  <BookMini from={palette[1]} to={palette[0]} />
+                </div>
+
+                <div className="mt-5 flex items-center gap-3">
+                  <span className="text-[10px] uppercase tracking-[0.14em] text-[#8b8174] shrink-0">Capítulos</span>
+                  <div className="flex-1 flex gap-1.5">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <div key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i < 3 ? '#bb7a1c' : '#f1eadf', opacity: i < 3 ? 1 : 0.55 }} />
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-[#bb7a1c] font-medium shrink-0">pronto para ler</span>
                 </div>
               </div>
-              <span className="absolute -bottom-3 right-5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium"
-                style={{ background: palette[1], color: '#fff' }}>
-                PDF
-              </span>
-            </div>
 
-            {/* Transformation particles */}
-            <div className="absolute top-24 right-8 left-8 bottom-6 flex items-center justify-center">
-              <div className="w-px h-full bg-gradient-to-b from-transparent via-[#bb7a1c]/30 to-transparent" />
-            </div>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <div key={i}
-                className="absolute w-1.5 h-1.5 rounded-full bg-[#bb7a1c]/50"
-                style={{
-                  top: `${30 + i * 14}%`,
-                  right: `${26 + (i % 3) * 8}%`,
-                  animation: 'float 3.5s ease-in-out infinite',
-                  animationDelay: `${i * 0.4}s`,
-                }} />
-            ))}
-
-            {/* Book result */}
-            <div className="absolute bottom-0 right-0 w-[190px] h-[260px] animate-float" style={{ animationDelay: '0.6s' }}>
-              <div className="relative w-full h-full rounded-r-[10px] rounded-l-[4px] shadow-2xl overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${palette[1]} 0%, ${palette[0]} 100%)` }}>
-                <div className="absolute inset-y-0 left-0 w-[7px] book-spine" style={{ background: 'rgba(0,0,0,0.2)' }} />
-                <div className="absolute inset-0 p-5 flex flex-col">
-                  <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center mb-auto">
-                    <svg className="w-4 h-4 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-                  </div>
-                  <div className="mt-auto space-y-1.5">
-                    <div className="h-1.5 rounded-full bg-white/40 w-full" />
-                    <div className="h-1.5 rounded-full bg-white/30 w-4/5" />
-                    <div className="h-1.5 rounded-full bg-white/20 w-3/5" />
-                  </div>
-                  <div className="mt-3 h-px bg-white/20" />
-                  <div className="h-1.5 rounded-full bg-white/25 w-1/3 mt-2" />
-                </div>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-6 py-3.5 bg-[#faf7f1] border-t border-[#f1eadf] text-[11px] text-[#8b8174]">
+                <span className="inline-flex items-center gap-1.5"><OkIcon /> Estrutura detectada</span>
+                <span className="inline-flex items-center gap-1.5"><OkIcon /> Texto extraído</span>
+                <span className="inline-flex items-center gap-1.5"><OkIcon /> Salvo offline</span>
               </div>
-              <span className="absolute -bottom-3 left-5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium bg-[#221d17] text-[#d9a441]">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-                Livro digital
-              </span>
-            </div>
-
-            {/* Small floating chips */}
-            <div className="absolute top-0 right-16 px-3 py-1.5 rounded-full bg-white text-[11px] font-medium text-[#4b4238] shadow-md animate-float border border-[#e6ddd0]" style={{ animationDelay: '1.2s' }}>
-              ✓ Extração de texto
-            </div>
-            <div className="absolute bottom-40 left-0 px-3 py-1.5 rounded-full bg-white text-[11px] font-medium text-[#4b4238] shadow-md animate-float border border-[#e6ddd0]" style={{ animationDelay: '2s' }}>
-              📖 Capítulos
             </div>
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function OkIcon() {
+  return (
+    <svg className="w-3 h-3 text-[#bb7a1c]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
   );
 }

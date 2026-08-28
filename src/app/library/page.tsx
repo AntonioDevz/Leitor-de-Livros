@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useLibrary } from '@/hooks/useLibrary';
 import Navbar from '@/components/ui/Navbar';
+import SiteFooter from '@/components/ui/SiteFooter';
 import BookCard, { getPaletteFor } from '@/components/library/BookCard';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import type { Book } from '@/types';
@@ -192,6 +193,7 @@ export default function LibraryPage() {
           )}
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }
