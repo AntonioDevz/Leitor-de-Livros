@@ -2,6 +2,8 @@ import type { Book, BookPage, Chapter, BookMetadata, PageContent } from '@/types
 import { generateId } from './utils';
 import type { ProcessedPdf } from './pdf-processor';
 import { detectChapter } from './pdf-processor';
+import { paginateBook, type PaginationOptions } from './pagination';
+import { defaultReaderSettings } from './typography';
 
 function textToContent(text: string): PageContent[] {
   const content: PageContent[] = [];
@@ -119,50 +121,44 @@ function buildPageHtml(content: PageContent[]): string {
     .join('\n');
 }
 
-function isHeadingOnly(content: PageContent[]): boolean {
-  return content.length > 0 && content.every((c) => c.type === 'heading');
+function getPaginationOptions(): PaginationOptions {
+  let s = defaultReaderSettings;
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('bf-settings');
+      if (saved) s = { ...s, ...JSON.parse(saved) };
+    } catch {
+      // ignore
+    }
+  }
+  return {
+    viewportW: typeof window !== 'undefined' ? window.innerWidth : 390,
+    viewportH: typeof window !== 'undefined' ? window.innerHeight : 844,
+    fontSize: s.fontSize,
+    lineHeight: s.lineHeight,
+    letterSpacing: s.letterSpacing,
+    paragraphSpacing: s.paragraphSpacing,
+    contentWidth: s.contentWidth,
+    serif: /serif/i.test(s.fontFamily),
+  };
 }
 
-function buildBookPages(processed: ProcessedPdf): { pages: BookPage[]; origToNew: Map<number, number> } {
-  const pages: BookPage[] = [];
-  const origToNew = new Map<number, number>();
-  const pendingHeadings: PageContent[] = [];
-  const pendingOrigins: number[] = [];
-
-  const emit = (origins: number[], content: PageContent[]) => {
-    const pageNumber = pages.length + 1;
-    for (const o of origins) origToNew.set(o, pageNumber);
-    pages.push({
+function buildBookPages(processed: ProcessedPdf): { pages: BookPage[]; sourceFirstPage: Map<number, number> } {
+  const sourceContent = processed.pages.map((page) => ({
+    pageNumber: page.pageNumber,
+    content: textToContent(page.text),
+  }));
+  const { pages, sourceFirstPage } = paginateBook(sourceContent, getPaginationOptions());
+  return {
+    pages: pages.map((p, i) => ({
       id: generateId(),
-      pageNumber,
-      content,
-      html: buildPageHtml(content),
+      pageNumber: i + 1,
+      content: p.content,
+      html: buildPageHtml(p.content),
       hasImages: false,
-    });
+    })),
+    sourceFirstPage,
   };
-
-  for (const page of processed.pages) {
-    const content = textToContent(page.text);
-    if (isHeadingOnly(content)) {
-      // "CAPÍTULO 1 · Título" alone on a PDF page: fold it into the body page
-      pendingHeadings.push(...content);
-      pendingOrigins.push(page.pageNumber);
-      continue;
-    }
-
-    const origins = pendingOrigins.length ? pendingOrigins : [page.pageNumber];
-    const combined = pendingHeadings.length ? [...pendingHeadings, ...content] : content;
-    emit(origins, combined);
-    pendingHeadings.length = 0;
-    pendingOrigins.length = 0;
-  }
-
-  // trailing opener page(s): keep them as their own page(s)
-  if (pendingHeadings.length) {
-    emit(pendingOrigins, pendingHeadings);
-  }
-
-  return { pages, origToNew };
 }
 
 export async function convertToBook(
@@ -176,11 +172,11 @@ export async function convertToBook(
   const chapters = extractChapters(processed.pages);
 
   onProgress?.('Criando páginas');
-  const { pages, origToNew } = buildBookPages(processed);
+  const { pages, sourceFirstPage } = buildBookPages(processed);
 
-  // remap chapter pointers: opener pages that were folded into the body page
+  // remap chapter pointers to the reading page where each chapter actually begins
   for (const ch of chapters) {
-    const remapped = origToNew.get(ch.pageNumber);
+    const remapped = sourceFirstPage.get(ch.pageNumber);
     if (remapped) ch.pageNumber = remapped;
   }
 
