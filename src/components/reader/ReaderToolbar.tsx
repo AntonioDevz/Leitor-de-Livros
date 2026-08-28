@@ -41,7 +41,7 @@ export default function ReaderToolbar({
 }: ReaderToolbarProps) {
   return (
     <div
-      className="flex items-center justify-between px-3 md:px-5 py-2.5 border-b animate-slide-down"
+      className="flex items-center justify-between px-2.5 md:px-5 py-2 border-b animate-slide-down safe-top"
       style={{
         borderColor: theme.border,
         color: theme.foreground,

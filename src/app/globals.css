@@ -160,6 +160,192 @@ h1, h2, h3, h4, .font-display, .display-serif {
 .page-flip-enter { animation: pageFlipEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 .page-flip-exit { animation: pageFlipExit 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 
+/* ---------- Physical book reading experience ---------- */
+
+.reader-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Ambient lighting around the page (book resting on a surface) */
+.stage-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 38%, transparent 55%, rgba(0, 0, 0, 0.16) 100%);
+}
+:is(.theme-dark, .theme-black) .stage-ambient {
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 38%, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+.flip-scene {
+  perspective: 3200px;
+  perspective-origin: 50% 45%;
+  transition: opacity 0.25s ease;
+}
+
+.flip-sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+  backface-visibility: visible;
+  transform-origin: left center;
+}
+
+.flip-sheet--origin-right { transform-origin: right center; }
+
+.flip-sheet--animated {
+  transition: transform 0.42s cubic-bezier(0.5, 0.1, 0.22, 1);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face--back {
+  transform: rotateY(180deg);
+}
+
+/* Soft edge stack under the page (thickness of remaining pages) */
+.page-block-edge {
+  position: relative;
+}
+.page-block-edge::before,
+.page-block-edge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px 14px 14px 12px;
+  pointer-events: none;
+}
+.page-block-edge::before {
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.12),
+    0 4px 0 2px color-mix(in srgb, currentColor 6%, transparent),
+    0 6px 0 4px color-mix(in srgb, currentColor 4%, transparent),
+    0 10px 20px rgba(0, 0, 0, 0.28);
+  transform: translateY(0);
+}
+.page-block-edge::after {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Fold / lighting overlays that move with the turning page */
+.flip-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Active page turn shadow cast onto the page underneath */
+.under-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* Corner curl hint while dragging (left = forward flip, right = backward) */
+.curl-hint {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  pointer-events: none;
+  background: radial-gradient(circle at 100% 100%, rgba(0, 0, 0, 0.28) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Tap zone hints (book-like page turn regions) */
+.tap-zone-hint {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+}
+:is(.reader-stage):hover .tap-zone-hint,
+.controls-visible .tap-zone-hint {
+  opacity: 1;
+}
+.tap-zone-hint--left {
+  left: 0;
+  width: max(3rem, 20%);
+  background: linear-gradient(to right, color-mix(in srgb, currentColor 5%, transparent), transparent);
+}
+.tap-zone-hint--right {
+  right: 0;
+  width: max(3rem, 20%);
+  background: linear-gradient(to left, color-mix(in srgb, currentColor 5%, transparent), transparent);
+}
+
+/* Open-book (double page) spread */
+.book-spread {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 2000px;
+}
+.book-spread__page {
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+.book-spread__page--left {
+  transform: perspective(2000px) rotateY(5deg);
+  transform-origin: right center;
+}
+.book-spread__page--right {
+  transform: perspective(2000px) rotateY(-5deg);
+  transform-origin: left center;
+}
+.book-spread__gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 34px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.05) 28%, transparent 45%, transparent 55%, rgba(0, 0, 0, 0.05) 72%, rgba(0, 0, 0, 0.28));
+  filter: blur(0.5px);
+}
+.book-spread__gutter::after {
+  content: '';
+  position: absolute;
+  inset: 0 -2px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.14), transparent);
+}
+
+/* iOS safe areas */
+.safe-top { padding-top: env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+@media (max-width: 640px) {
+  .book-spread__page--left,
+  .book-spread__page--right {
+    transform: none;
+  }
+}
+
 /* ---------- Reading content ---------- */
 .page-content {
   font-family: var(--reader-font, inherit);

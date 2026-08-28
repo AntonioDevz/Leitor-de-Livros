@@ -42,7 +42,8 @@ export default function SidebarPanel({
 
   return (
     <div
-      className="absolute left-3 md:left-5 top-14 w-[21rem] max-w-[calc(100vw-1.5rem)] max-h-[calc(100vh-6rem)] overflow-hidden rounded-2xl border shadow-2xl z-30 animate-slide-left flex flex-col"
+      data-panel="sidebar"
+      className="absolute inset-x-2 bottom-2 md:inset-x-auto md:left-5 md:top-14 md:bottom-auto md:w-[21rem] max-w-[calc(100vw-1rem)] md:max-w-[21rem] max-h-[75dvh] md:max-h-[calc(100vh-6rem)] overflow-hidden rounded-2xl border shadow-2xl z-30 animate-slide-up md:animate-slide-left flex flex-col"
       style={{
         background: theme.background,
         borderColor: theme.border,
@@ -50,6 +51,9 @@ export default function SidebarPanel({
       }}
       onClick={(e) => e.stopPropagation()}
     >
+      <div className="md:hidden pt-2 pb-1 flex justify-center" style={{ color: theme.muted }}>
+        <span className="w-10 h-1 rounded-full" style={{ background: `color-mix(in srgb, currentColor 25%, transparent)` }} />
+      </div>
       <div className="flex border-b" style={{ borderColor: theme.border }}>
         {tabsList.map(({ key, label, icon: Icon }) => {
           const active = tab === key;

@@ -131,11 +131,13 @@ function Toggle({
 export default function ReaderSettingsPanel({
   settings,
   onChangeSettings,
+  onClose,
   theme,
 }: ReaderSettingsPanelProps) {
   return (
     <div
-      className="absolute right-3 md:right-5 top-14 w-[21rem] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border shadow-2xl z-30 animate-slide-down hide-scrollbar"
+      data-panel="settings"
+      className="absolute inset-x-2 bottom-2 md:inset-x-auto md:right-5 md:top-14 md:bottom-auto md:w-[21rem] max-h-[75dvh] md:max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border shadow-2xl z-30 animate-slide-up md:animate-slide-down hide-scrollbar"
       style={{
         background: theme.background,
         borderColor: theme.border,
@@ -145,8 +147,18 @@ export default function ReaderSettingsPanel({
     >
       <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b"
         style={{ borderColor: theme.border, background: theme.background }}>
+        <span className="md:hidden w-10 h-1 rounded-full mx-auto" style={{ background: `color-mix(in srgb, currentColor 25%, transparent)` }} />
         <p className="text-sm font-semibold" style={{ color: theme.foreground }}>Aparência</p>
-        <span className="w-5 h-[3px] rounded-full" style={{ background: `color-mix(in srgb, currentColor 25%, transparent)` }} />
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg transition-colors md:hidden"
+          style={{ color: theme.muted }}
+          aria-label="Fechar"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <div className="p-5 space-y-6">

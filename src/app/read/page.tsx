@@ -2,15 +2,25 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { Book, Bookmark } from '@/types';
+import type { Book } from '@/types';
 import { getBook } from '@/lib/db';
 import { useReader } from '@/hooks/useReader';
 import { getTheme } from '@/lib/themes';
-import { cn } from '@/lib/utils';
 import ReaderToolbar from '@/components/reader/ReaderToolbar';
 import ReaderSettingsPanel from '@/components/reader/ReaderSettingsPanel';
 import PageContent from '@/components/reader/PageContent';
+import PageFlipSheet from '@/components/reader/PageFlipSheet';
 import SidebarPanel from '@/components/reader/SidebarPanel';
+
+const EASE_OUT_CUBIC = (t: number) => 1 - Math.pow(1 - t, 3);
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+type FlipDir = 'next' | 'prev';
+interface FlipState {
+  dir: FlipDir | null;
+  progress: number;
+  phase: 'idle' | 'drag' | 'commit';
+}
 
 function ReaderContent() {
   const searchParams = useSearchParams();
@@ -20,11 +30,79 @@ function ReaderContent() {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'toc' | 'bookmarks' | 'search' | null>(null);
-  const [animating, setAnimating] = useState<'next' | 'prev' | null>(null);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [animating, setAnimating] = useState<FlipDir | null>(null);
+  const [flip, setFlip] = useState<FlipState>({ dir: null, progress: 0, phase: 'idle' });
+  const stageRef = useRef<HTMLDivElement>(null);
+  const gestureRef = useRef<{ pointerId: number | null; startX: number; startY: number; moved: boolean; width: number }>({
+    pointerId: null, startX: 0, startY: 0, moved: false, width: 0,
+  });
+  const animFrameRef = useRef<number | null>(null);
+  const flipStateRef = useRef(flip);
+  flipStateRef.current = flip;
 
   const reader = useReader(book);
+
+  const stopFlipAnim = useCallback(() => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+  }, []);
+
+  const commitFlip = useCallback(
+    (dir: FlipDir) => {
+      if (dir === 'next') reader.nextPage();
+      else reader.prevPage();
+      setFlip({ dir: null, progress: 0, phase: 'idle' });
+    },
+    [reader]
+  );
+
+  const animateFlip = useCallback(
+    (dir: FlipDir, from: number, to: number, duration: number, onDone: () => void) => {
+      stopFlipAnim();
+      const start = performance.now();
+      const step = (now: number) => {
+        const raw = clamp01((now - start) / duration);
+        const eased = EASE_OUT_CUBIC(raw);
+        const value = from + (to - from) * eased;
+        setFlip((f) => ({ ...f, dir, progress: value, phase: 'commit' }));
+        if (raw < 1) {
+          animFrameRef.current = requestAnimationFrame(step);
+        } else {
+          animFrameRef.current = null;
+          onDone();
+        }
+      };
+      animFrameRef.current = requestAnimationFrame(step);
+    },
+    [stopFlipAnim]
+  );
+
+  const triggerFlip = useCallback(
+    (dir: FlipDir) => {
+      if (flipStateRef.current.phase !== 'idle') return;
+      if (reader.settings.reduceAnimations || reader.settings.pageAnimation === 'none') {
+        commitFlip(dir);
+        return;
+      }
+      if (reader.settings.pageMode === 'single') {
+        if (dir === 'next' && reader.currentPage >= reader.totalPages) return;
+        if (dir === 'prev' && reader.currentPage <= 1) return;
+        animateFlip(dir, 0, 1, 480, () => commitFlip(dir));
+        return;
+      }
+      // double mode -> animate the spread
+      if (dir === 'next' && reader.currentPage >= reader.totalPages) return;
+      if (dir === 'prev' && reader.currentPage <= 1) return;
+      setAnimating(dir);
+      setTimeout(() => {
+        commitFlip(dir);
+        setAnimating(null);
+      }, 320);
+    },
+    [reader, animateFlip, commitFlip]
+  );
 
   useEffect(() => {
     if (!bookId) {
@@ -43,21 +121,20 @@ function ReaderContent() {
     if (page) {
       reader.goToPage(parseInt(page));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book]);
 
-  const turnPage = useCallback((direction: 'next' | 'prev') => {
-    if (reader.settings.pageAnimation === 'none') {
-      if (direction === 'next') reader.nextPage();
-      else reader.prevPage();
-      return;
-    }
-    setAnimating(direction);
-    setTimeout(() => {
-      if (direction === 'next') reader.nextPage();
-      else reader.prevPage();
-      setAnimating(null);
-    }, 300);
+  const toggleControls = useCallback(() => {
+    reader.setShowControls(!reader.showControls);
   }, [reader]);
+
+  // Auto-hide controls for an immersive book feel
+  useEffect(() => {
+    if (!reader.showControls || showSettings || sidebarTab || flip.phase !== 'idle') return;
+    const t = setTimeout(() => reader.setShowControls(false), 4200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reader.showControls, showSettings, sidebarTab, flip.phase]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,12 +143,12 @@ function ReaderContent() {
         case 'ArrowRight':
         case 'PageDown':
           e.preventDefault();
-          turnPage('next');
+          triggerFlip('next');
           break;
         case 'ArrowLeft':
         case 'PageUp':
           e.preventDefault();
-          turnPage('prev');
+          triggerFlip('prev');
           break;
         case 'Home':
           e.preventDefault();
@@ -88,20 +165,115 @@ function ReaderContent() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [turnPage, reader, showSettings, sidebarTab]);
+  }, [triggerFlip, reader, showSettings, sidebarTab]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientX);
+  // ---------- Pointer gesture engine (drag-to-turn like a real book) ----------
+
+  const isInteractiveTarget = (el: EventTarget | null) => {
+    const node = el as HTMLElement | null;
+    if (!node || !node.closest) return true;
+    return !!node.closest('button, select, input, a, [data-panel]');
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart === null || !reader.settings.swipeToTurn) return;
-    const diff = touchStart - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      turnPage(diff > 0 ? 'next' : 'prev');
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (reader.settings.pageMode === 'scroll') return;
+      if (isInteractiveTarget(e.target)) return;
+      stopFlipAnim();
+      const stage = stageRef.current;
+      const width = stage?.getBoundingClientRect().width || 0;
+      gestureRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, width };
+      try {
+        stage?.setPointerCapture(e.pointerId);
+      } catch { /* ignore */ }
+    },
+    [reader.settings.pageMode, stopFlipAnim]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const g = gestureRef.current;
+      if (g.pointerId !== e.pointerId) return;
+      const dx = g.startX - e.clientX;
+      const dy = g.startY - e.clientY;
+      if (!g.moved) {
+        if (Math.hypot(dx, dy) < 8) return;
+        g.moved = true;
+      }
+      if (reader.settings.pageMode !== 'single' || reader.settings.reduceAnimations) {
+        return; // treat as swipe; decide on release
+      }
+      const dir: FlipDir = dx > 0 ? 'next' : 'prev';
+      if (dir === 'next' && reader.currentPage >= reader.totalPages) return;
+      if (dir === 'prev' && reader.currentPage <= 1) return;
+
+      // paper-like resistance: finger leads, page follows with slight lag
+      const raw = Math.min(1, Math.abs(dx) / (g.width * 0.85));
+      const eased = clamp01(raw * 1.18);
+      setFlip((f) =>
+        f.dir !== dir ? { dir, progress: 0.04, phase: 'drag' } : { dir, progress: eased, phase: 'drag' }
+      );
+    },
+    [reader.settings.pageMode, reader.settings.reduceAnimations, reader.currentPage, reader.totalPages]
+  );
+
+  const handlePointerEnd = useCallback(
+    (e: React.PointerEvent) => {
+      const g = gestureRef.current;
+      if (g.pointerId !== e.pointerId) return;
+      g.pointerId = null;
+      const wasMoved = g.moved;
+
+      if (!wasMoved) {
+        // ---- TAP behaviour ----
+        const stage = stageRef.current;
+        if (!stage) return;
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const w = rect.width || 1;
+        if (x < w * 0.33) {
+          triggerFlip('prev');
+          return;
+        }
+        if (x > w * 0.66) {
+          triggerFlip('next');
+          return;
+        }
+        toggleControls();
+        return;
+      }
+
+      // ---- DRAG ended: commit or snap back ----
+      const state = flipStateRef.current;
+      if (state.phase === 'idle' || !state.dir) {
+        // swipe on non-flip modes / double mode
+        const dx = g.startX - e.clientX;
+        if (Math.abs(dx) > 45) {
+          triggerFlip(dx > 0 ? 'next' : 'prev');
+        }
+        return;
+      }
+      if (state.progress > 0.4) {
+        animateFlip(state.dir, state.progress, 1, (1 - state.progress) * 420 + 120, () =>
+          commitFlip(state.dir!)
+        );
+      } else {
+        animateFlip(state.dir, state.progress, 0, state.progress * 380 + 80, () =>
+          setFlip({ dir: null, progress: 0, phase: 'idle' })
+        );
+      }
+    },
+    [triggerFlip, toggleControls, animateFlip, commitFlip]
+  );
+
+  const handlePointerCancel = useCallback(() => {
+    const state = flipStateRef.current;
+    if (state.phase === 'drag' && state.dir) {
+      animateFlip(state.dir, state.progress, 0, 160, () => setFlip({ dir: null, progress: 0, phase: 'idle' }));
     }
-    setTouchStart(null);
-  };
+    gestureRef.current.pointerId = null;
+  }, [animateFlip]);
 
   if (loading) {
     return (
@@ -131,27 +303,30 @@ function ReaderContent() {
   }
 
   const theme = getTheme(reader.settings.theme, reader.settings.customTheme);
+  const themeClass = reader.settings.theme === 'dark' || reader.settings.theme === 'black' ? 'theme-dark' : 'theme-light';
   const currentChapter = book.chapters.reduce((prev, ch) => {
     return ch.pageNumber <= reader.currentPage ? ch : prev;
   }, book.chapters[0]);
 
-  const animationClass =
-    animating === 'next' ? 'page-flip-exit' :
-    animating === 'prev' ? 'page-flip-enter' : '';
+  const pageMode = reader.settings.pageMode;
+  const flipActive = flip.phase !== 'idle' && flip.dir !== null;
+  const isForward = flip.dir === 'next';
+  const singleBlockWidth = `min(${reader.settings.contentWidth}px, calc(100% - 2.5rem))`;
+  const radius = '14px';
+
+  // Page picks for the physical single-page flip
+  const singleCurrent = book.pages[reader.currentPage - 1];
+  const singleBase = flipActive
+    ? isForward
+      ? book.pages[reader.currentPage]
+      : book.pages[reader.currentPage - 2]
+    : singleCurrent;
+  const flipBack = flipActive ? (isForward ? book.pages[reader.currentPage] : book.pages[reader.currentPage - 2]) : null;
 
   return (
     <div
-      ref={containerRef}
-      className="min-h-screen flex flex-col transition-colors duration-300"
+      className={`min-h-screen h-dvh flex flex-col transition-colors duration-300 ${themeClass} ${reader.showControls ? 'controls-visible' : ''}`}
       style={{ background: theme.background, color: theme.foreground }}
-      onClick={(e) => {
-        if (e.target === containerRef.current || (e.target as HTMLElement).dataset.reader === 'true') {
-          reader.setShowControls(!reader.showControls);
-          setSidebarTab(null);
-        }
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
       {reader.showControls && (
         <ReaderToolbar
@@ -170,7 +345,17 @@ function ReaderContent() {
         />
       )}
 
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+      <div
+        ref={stageRef}
+        className="reader-stage"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerCancel}
+        onPointerLeave={handlePointerCancel}
+      >
+        <div className="stage-ambient" />
+
         {showSettings && reader.showControls && (
           <ReaderSettingsPanel
             settings={reader.settings}
@@ -197,110 +382,115 @@ function ReaderContent() {
           />
         )}
 
-        {book.pages.length > 0 && (
-          <div
-            className={cn(
-              'w-full h-full flex items-center justify-center',
-              animationClass
-            )}
-            data-reader="true"
-          >
-            {reader.settings.pageMode === 'scroll' ? (
-              <div
-                className="w-full max-w-3xl mx-auto px-6 py-12 overflow-y-auto hide-scrollbar"
-                style={{
-                  maxHeight: '100vh',
-                  '--reader-font': reader.settings.fontFamily,
-                  '--reader-font-size': `${reader.settings.fontSize}px`,
-                  '--reader-font-weight': reader.settings.fontWeight,
-                  '--reader-line-height': reader.settings.lineHeight,
-                  '--reader-letter-spacing': `${reader.settings.letterSpacing}em`,
-                  '--reader-paragraph-spacing': reader.settings.paragraphSpacing,
-                  '--reader-fg': theme.foreground,
-                } as React.CSSProperties}
-              >
-                {book.pages.map((page) => (
-                  <div key={page.id} className="page-content mb-8 pb-8 border-b border-current/10" data-reader="true">
-                    <div dangerouslySetInnerHTML={{ __html: page.html }} />
-                  </div>
-                ))}
-              </div>
-            ) : reader.settings.pageMode === 'double' ? (
-              <div className="flex gap-1 items-center justify-center" data-reader="true">
-                {reader.currentPage > 1 && (
+        {book.pages.length > 0 && pageMode === 'single' && (
+          <div className="flip-scene relative w-full h-full flex items-center justify-center" data-reader="true">
+            <div
+              className="book-block relative page-block-edge"
+              style={{ width: singleBlockWidth, height: '100%', maxHeight: '100%', borderRadius: radius, color: theme.foreground }}
+            >
+              {/* Base page (revealed beneath the turning sheet) */}
+              <div className="absolute inset-0" style={{ borderRadius: radius, background: theme.background, boxShadow: '0 2px 6px rgba(0,0,0,0.1), 0 22px 48px rgba(0,0,0,0.22)' }}>
+                {singleBase && <PageContent page={singleBase} settings={reader.settings} theme={theme} />}
+                {flipActive && (
                   <div
-                    className="reader-shadow rounded-l-lg overflow-hidden"
-                    style={{ background: theme.background }}
-                  >
-                    <PageContent
-                      page={book.pages[reader.currentPage - 2]}
-                      settings={reader.settings}
-                      theme={theme}
-                    />
-                  </div>
-                )}
-                <div
-                  className="shadow-xl rounded-r-lg overflow-hidden"
-                  style={{ background: theme.background }}
-                >
-                  <PageContent
-                    page={book.pages[reader.currentPage - 1]}
-                    settings={reader.settings}
-                    theme={theme}
+                    className="under-shade"
+                    style={{
+                      background: isForward
+                        ? `linear-gradient(to right, transparent 55%, rgba(0,0,0,${0.22 * flip.progress}) 100%)`
+                        : `linear-gradient(to left, transparent 55%, rgba(0,0,0,${0.22 * flip.progress}) 100%)`,
+                      zIndex: 2,
+                    }}
                   />
-                </div>
+                )}
               </div>
-            ) : (
-              <div
-                className="reader-shadow rounded-lg overflow-hidden"
-                style={{ background: theme.background }}
-                data-reader="true"
-              >
-                <PageContent
-                  page={book.pages[reader.currentPage - 1]}
+
+              {/* Turning sheet */}
+              {flipActive && singleCurrent && (
+                <PageFlipSheet
+                  front={singleCurrent}
+                  back={flipBack}
+                  direction={flip.dir as FlipDir}
+                  progress={flip.progress}
+                  animated={false}
                   settings={reader.settings}
                   theme={theme}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
-        {reader.showControls && (
+        {book.pages.length > 0 && pageMode === 'double' && (
+          <div className={`flip-scene relative w-full h-full flex items-center justify-center ${animating ? 'page-flip-exit' : ''}`} data-reader="true">
+            <div className="relative h-full flex items-stretch justify-center" style={{ gap: 0 }}>
+              {reader.currentPage > 1 && (
+                <div
+                  className="book-spread__page book-spread__page--left page-block-edge"
+                  style={{ width: `min(${reader.settings.contentWidth / 2}px, 46vw)`, borderRadius: '12px 4px 4px 12px', color: theme.foreground }}
+                >
+                  {book.pages[reader.currentPage - 2] && (
+                    <PageContent page={book.pages[reader.currentPage - 2]} settings={reader.settings} theme={theme} />
+                  )}
+                </div>
+              )}
+              <div
+                className="book-spread__page book-spread__page--right page-block-edge"
+                style={{ width: `min(${reader.settings.contentWidth / 2}px, 46vw)`, borderRadius: '4px 12px 12px 4px', color: theme.foreground }}
+              >
+                {book.pages[reader.currentPage - 1] && (
+                  <PageContent page={book.pages[reader.currentPage - 1]} settings={reader.settings} theme={theme} />
+                )}
+              </div>
+              {reader.currentPage > 1 && <div className="book-spread__gutter" />}
+            </div>
+          </div>
+        )}
+
+        {book.pages.length > 0 && pageMode === 'scroll' && (
+          <div
+            className="w-full h-full mx-auto overflow-y-auto hide-scrollbar px-5"
+            style={{
+              maxWidth: `min(${reader.settings.contentWidth}px, 100%)`,
+              height: '100%',
+            }}
+          >
+            {book.pages.map((page) => (
+              <div
+                key={page.id}
+                className="page-block-edge relative mb-6"
+                style={{ borderRadius: radius, background: theme.background, color: theme.foreground }}
+              >
+                <PageContent page={page} settings={reader.settings} theme={theme} />
+              </div>
+            ))}
+            <div className="pb-[env(safe-area-inset-bottom,1rem)]" />
+          </div>
+        )}
+
+        {/* Corner curl hint while dragging */}
+        {flip.phase === 'drag' && flip.dir && (
+          <div
+            className="curl-hint"
+            style={{
+              bottom: 6,
+              opacity: clamp01(flip.progress * 2),
+              ...(flip.dir === 'next' ? { right: 6 } : { left: 6 }),
+            } as React.CSSProperties}
+          />
+        )}
+
+        {/* Invisible book-like tap zones */}
+        {reader.showControls && pageMode !== 'scroll' && (
           <>
-            {reader.settings.clickToTurn && reader.settings.pageMode !== 'scroll' && (
-              <>
-                {reader.currentPage > 1 && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); turnPage('prev'); }}
-                    className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:bg-black/5 opacity-0 hover:opacity-100"
-                    style={{ color: theme.foreground }}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                )}
-                {reader.currentPage < reader.totalPages && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); turnPage('next'); }}
-                    className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:bg-black/5 opacity-0 hover:opacity-100"
-                    style={{ color: theme.foreground }}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                )}
-              </>
-            )}
+            <div className="tap-zone-hint tap-zone-hint--left" />
+            <div className="tap-zone-hint tap-zone-hint--right" />
           </>
         )}
       </div>
 
       {reader.showControls && (
         <div
-          className="flex items-center justify-between px-4 py-2 transition-colors"
+          className="flex items-center justify-between px-4 py-2 transition-colors safe-bottom"
           style={{ color: theme.muted }}
         >
           <div className="flex items-center gap-2.5 px-2 text-[11px] tabular-nums">

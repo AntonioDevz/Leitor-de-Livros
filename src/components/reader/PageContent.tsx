@@ -13,10 +13,10 @@ export default function PageContent({ page, settings, theme }: PageContentProps)
     <div
       className="page-content overflow-y-auto hide-scrollbar"
       style={{
-        width: settings.pageMode === 'double' ? `${settings.contentWidth / 2}px` : `${settings.contentWidth}px`,
-        maxWidth: '90vw',
-        height: settings.pageMode === 'scroll' ? 'auto' : '80vh',
-        padding: '3rem 2.5rem',
+        width: '100%',
+        maxWidth: '100%',
+        height: '100%',
+        padding: 'clamp(1.25rem, 4vw, 3.25rem) clamp(1rem, 4vw, 2.75rem)',
         fontFamily: settings.fontFamily,
         fontSize: `${settings.fontSize}px`,
         fontWeight: settings.fontWeight,
@@ -39,7 +39,7 @@ export default function PageContent({ page, settings, theme }: PageContentProps)
         } as React.CSSProperties}
       />
       <div
-        className="mt-8 pt-4 text-center flex items-center justify-center gap-2.5"
+        className="mt-6 pt-3 text-center flex items-center justify-center gap-2.5"
         style={{ borderTop: `1px solid ${theme.border}`, color: theme.muted }}
       >
         <span className="w-6 h-px" style={{ background: theme.border }} />
