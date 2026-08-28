@@ -6,8 +6,9 @@ import Navbar from '@/components/ui/Navbar';
 import { processPdf } from '@/lib/pdf-processor';
 import { convertToBook } from '@/lib/book-converter';
 import { saveBook } from '@/lib/db';
-import { formatFileSize } from '@/lib/utils';
+import { formatFileSize, cn } from '@/lib/utils';
 import type { Book } from '@/types';
+import { FileText, X, Sparkles, Check, ChevronRight, UploadCloud, ShieldCheck, Zap, Plus } from 'lucide-react';
 
 const CONVERSION_STEPS = [
   'Lendo PDF',
@@ -97,153 +98,188 @@ export default function UploadPage() {
   }, [file, conversionMode, router]);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[#faf7f1]">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-6 pt-24 pb-12">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Novo Livro</h1>
-        <p className="text-sm text-slate-500 mb-8">Faça upload de um PDF para transformá-lo em um livro digital.</p>
+      <div className="pt-24 pb-16">
+        <div className="max-w-2xl mx-auto px-5 md:px-8 mb-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-2">
+            Novo livro
+          </p>
+          <h1 className="font-serif text-4xl font-semibold text-[#221d17] tracking-tight">
+            Transforme seu PDF
+          </h1>
+          <p className="text-[#8b8174] mt-3 leading-relaxed">
+            Seu arquivo é processado localmente no navegador — nada é enviado para servidores.
+            Tudo fica salvo offline na sua biblioteca.
+          </p>
+        </div>
 
-        {!processing && !file && (
-          <div
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-            onDragLeave={() => setDragActive(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-200 ${
-              dragActive
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-slate-200 hover:border-slate-300 hover:bg-white'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            />
-            <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+        <div className="max-w-2xl mx-auto px-5 md:px-8">
+          {!processing && !file && (
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                'relative border-2 border-dashed rounded-3xl p-14 md:p-20 text-center cursor-pointer transition-all duration-300 overflow-hidden bg-[#faf7f1]',
+                dragActive
+                  ? 'border-[#bb7a1c] bg-[#f6e8cf] scale-[1.01] shadow-lg'
+                  : 'border-[#d8ccb9] hover:border-[#bb7a1c]/60 hover:bg-white'
+              )}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              />
+
+              <div className="relative mx-auto w-20 h-20 rounded-2xl bg-[#f1eadf] border border-[#e6ddd0] flex items-center justify-center mb-8 transition-transform group-hover:scale-105">
+                <UploadCloud className="w-9 h-9 text-[#bb7a1c]" strokeWidth={1.5} />
+                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#221d17] flex items-center justify-center">
+                  <Plus className="w-3.5 h-3.5 text-[#d9a441]" />
+                </span>
+              </div>
+
+              <p className="font-serif text-xl font-semibold text-[#221d17] mb-2">
+                Arraste seu PDF aqui
+              </p>
+              <p className="text-sm text-[#8b8174] mb-8">
+                ou <span className="text-[#bb7a1c] font-medium underline underline-offset-4">clique para selecionar</span> · até 200MB
+              </p>
+
+              <div className="flex items-center justify-center gap-6 text-[11px] text-[#8b8174]">
+                <span className="inline-flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#bb7a1c]" /> 100% local
+                </span>
+                <span className="w-1 h-1 rounded-full bg-[#d8ccb9]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-[#bb7a1c]" /> Rápido
+                </span>
+                <span className="w-1 h-1 rounded-full bg-[#d8ccb9]" />
+                <span className="inline-flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#bb7a1c]" /> Gratuito
+                </span>
+              </div>
             </div>
-            <p className="text-lg font-medium text-slate-900 mb-2">
-              Arraste seu PDF aqui
-            </p>
-            <p className="text-sm text-slate-500">
-              ou clique para selecionar
-            </p>
-          </div>
-        )}
+          )}
 
-        {file && !processing && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 animate-scale-in">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
-                <svg className="w-7 h-7 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
+          {file && !processing && (
+            <div className="bg-white rounded-3xl border border-[#e6ddd0] p-6 md:p-7 animate-scale-in shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 shrink-0 rounded-2xl bg-[#f3dede] flex items-center justify-center">
+                  <FileText className="w-7 h-7 text-[#c24040]" strokeWidth={1.6} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-[#221d17] truncate">{file.name}</h3>
+                  <p className="text-sm text-[#8b8174]">{formatFileSize(file.size)} · pronto para converter</p>
+                </div>
+                <button
+                  onClick={() => { setFile(null); setError(''); }}
+                  className="p-2 rounded-xl hover:bg-[#f1eadf] transition-colors text-[#8b8174] hover:text-[#221d17]"
+                  aria-label="Remover arquivo"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-slate-900 truncate">{file.name}</h3>
-                <p className="text-sm text-slate-500">{formatFileSize(file.size)}</p>
+
+              <div className="mt-6 pt-6 border-t border-[#f1eadf]">
+                <p className="text-sm font-semibold text-[#221d17] mb-4">Modo de conversão</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setConversionMode('reflow')}
+                    className={cn(
+                      'p-4 rounded-2xl border-2 text-left transition-all duration-200 group relative overflow-hidden',
+                      conversionMode === 'reflow'
+                        ? 'border-[#bb7a1c] bg-[#f6e8cf]'
+                        : 'border-[#e6ddd0] hover:border-[#d8ccb9] hover:bg-[#faf7f1]'
+                    )}
+                  >
+                    {conversionMode === 'reflow' && (
+                      <Check className="absolute top-3 right-3 w-4 h-4 text-[#bb7a1c]" strokeWidth={2.5} />
+                    )}
+                    <p className="text-sm font-semibold text-[#221d17]">Reflow</p>
+                    <p className="text-xs text-[#8b8174] mt-1 leading-relaxed">Conteúdo responsivo e adaptável, ideal para leitura no celular</p>
+                  </button>
+                  <button
+                    onClick={() => setConversionMode('preservation')}
+                    className={cn(
+                      'p-4 rounded-2xl border-2 text-left transition-all duration-200 group relative overflow-hidden',
+                      conversionMode === 'preservation'
+                        ? 'border-[#bb7a1c] bg-[#f6e8cf]'
+                        : 'border-[#e6ddd0] hover:border-[#d8ccb9] hover:bg-[#faf7f1]'
+                    )}
+                  >
+                    {conversionMode === 'preservation' && (
+                      <Check className="absolute top-3 right-3 w-4 h-4 text-[#bb7a1c]" strokeWidth={2.5} />
+                    )}
+                    <p className="text-sm font-semibold text-[#221d17]">Preservação</p>
+                    <p className="text-xs text-[#8b8174] mt-1 leading-relaxed">Mantém o layout visual original do documento</p>
+                  </button>
+                </div>
               </div>
+
+              {error && (
+                <div className="mt-5 p-4 bg-[#fdf0f0] border border-[#f3d7d7] rounded-2xl text-sm text-[#c24040]">
+                  {error}
+                </div>
+              )}
+
               <button
-                onClick={() => { setFile(null); setError(''); }}
-                className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+                onClick={startConversion}
+                className="group mt-6 w-full py-4 bg-[#221d17] text-[#e9dfcd] rounded-full font-medium inline-flex items-center justify-center gap-2 hover:bg-[#3a322a] hover:-translate-y-0.5 transition-all duration-200 shadow-lg"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Converter para Livro Digital
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
+          )}
 
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-sm font-medium text-slate-700 mb-3">Modo de conversão</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setConversionMode('reflow')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    conversionMode === 'reflow'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <p className="text-sm font-medium text-slate-900">Reflow</p>
-                  <p className="text-xs text-slate-500 mt-1">Conteúdo responsivo e adaptável</p>
-                </button>
-                <button
-                  onClick={() => setConversionMode('preservation')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    conversionMode === 'preservation'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <p className="text-sm font-medium text-slate-900">Preservação</p>
-                  <p className="text-xs text-slate-500 mt-1">Manter layout visual original</p>
-                </button>
+          {processing && (
+            <div className="bg-white rounded-3xl border border-[#e6ddd0] p-8 md:p-10 animate-scale-in shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-[#f1eadf] flex items-center justify-center mx-auto mb-6">
+                <div className="w-8 h-8 border-[2.5px] border-[#bb7a1c] border-t-transparent rounded-full animate-spin" />
+              </div>
+              <h3 className="font-serif text-xl font-semibold text-[#221d17] mb-2 text-center">
+                Fazendo a mágica
+              </h3>
+              <p className="text-sm text-[#8b8174] mb-8 text-center">{currentStep}...</p>
+
+              <div className="max-w-md mx-auto">
+                <div className="w-full h-1.5 bg-[#f1eadf] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#bb7a1c] to-[#d9a441] rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${((stepIndex + 1) / CONVERSION_STEPS.length) * 100}%` }}
+                  />
+                </div>
+                <div className="mt-6 grid gap-y-2 grid-cols-1">
+                  {CONVERSION_STEPS.map((step, i) => (
+                    <div key={step} className="flex items-center gap-3 text-[13px]">
+                      {i < stepIndex ? (
+                        <span className="w-5 h-5 rounded-full bg-[#bb7a1c]/15 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-[#bb7a1c]" strokeWidth={3} />
+                        </span>
+                      ) : i === stepIndex ? (
+                        <span className="w-5 h-5 border-2 border-[#bb7a1c] border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <span className="w-5 h-5 rounded-full border border-[#e6ddd0]" />
+                      )}
+                      <span className={i <= stepIndex ? 'text-[#221d17] font-medium' : 'text-[#8b8174]/60'}>{step}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
 
-            {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
-            <button
-              onClick={startConversion}
-              className="mt-6 w-full py-3.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
-            >
-              Converter para Livro Digital
-            </button>
-          </div>
-        )}
-
-        {processing && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center animate-scale-in">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-6">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          {error && !file && (
+            <div className="mt-4 p-4 bg-[#fdf0f0] border border-[#f3d7d7] rounded-2xl text-sm text-[#c24040]">
+              {error}
             </div>
-            <h3 className="text-lg font-medium text-slate-900 mb-2">Processando seu livro</h3>
-            <p className="text-sm text-slate-500 mb-8">{currentStep}...</p>
-
-            <div className="max-w-xs mx-auto">
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${((stepIndex + 1) / CONVERSION_STEPS.length) * 100}%` }}
-                />
-              </div>
-              <div className="mt-4 space-y-2">
-                {CONVERSION_STEPS.map((step, i) => (
-                  <div key={step} className="flex items-center gap-2 text-xs">
-                    {i < stepIndex ? (
-                      <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : i === stepIndex ? (
-                      <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-slate-200" />
-                    )}
-                    <span className={i <= stepIndex ? 'text-slate-700' : 'text-slate-400'}>{step}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {error && !file && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-            {error}
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </main>
   );

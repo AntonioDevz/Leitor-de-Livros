@@ -105,18 +105,24 @@ function ReaderContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#faf7f1] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-9 h-9 border-[2.5px] border-[#d8ccb9] border-t-[#bb7a1c] rounded-full animate-spin" />
+          <p className="text-xs text-[#8b8174] tracking-wide">Abrindo seu livro…</p>
+        </div>
       </div>
     );
   }
 
   if (!book || !bookId) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-[#faf7f1] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg mb-4">Livro não encontrado</p>
-          <button onClick={() => router.push('/library/')} className="text-blue-400 hover:underline">
+          <p className="font-serif text-lg text-[#221d17] mb-4">Livro não encontrado</p>
+          <button
+            onClick={() => router.push('/library/')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#221d17] text-[#e9dfcd] rounded-full text-sm font-medium hover:bg-[#3a322a] transition-colors"
+          >
             Voltar à biblioteca
           </button>
         </div>
@@ -294,11 +300,30 @@ function ReaderContent() {
 
       {reader.showControls && (
         <div
-          className="flex items-center justify-between px-6 py-3 text-xs transition-colors"
+          className="flex items-center justify-between px-4 py-2 transition-colors"
           style={{ color: theme.muted }}
         >
-          <span>{reader.currentPage} de {reader.totalPages}</span>
-          <span>{reader.progress}%</span>
+          <div className="flex items-center gap-2.5 px-2 text-[11px] tabular-nums">
+            <span className="font-medium" style={{ color: theme.foreground }}>{reader.currentPage}</span>
+            <span className="opacity-50">—</span>
+            <span>{reader.totalPages}</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-1.5">
+            {currentChapter && (
+              <span className="text-[11px] opacity-80 max-w-[40vw] truncate">{currentChapter.title}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 px-2">
+            <div className="w-16 h-[3px] rounded-full overflow-hidden" style={{ background: `color-mix(in srgb, ${theme.foreground} 15%, transparent)` }}>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${reader.progress}%`, background: theme.accent }}
+              />
+            </div>
+            <span className="text-[11px] tabular-nums font-medium" style={{ color: theme.foreground }}>
+              {reader.progress}%
+            </span>
+          </div>
         </div>
       )}
     </div>
@@ -308,8 +333,8 @@ function ReaderContent() {
 export default function ReadPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#faf7f1] flex items-center justify-center">
+        <div className="w-9 h-9 border-[2.5px] border-[#d8ccb9] border-t-[#bb7a1c] rounded-full animate-spin" />
       </div>
     }>
       <ReaderContent />

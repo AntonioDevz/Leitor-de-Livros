@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { Book } from '@/types';
 import { getBook, deleteBook } from '@/lib/db';
 import Navbar from '@/components/ui/Navbar';
-import { formatFileSize, formatDate } from '@/lib/utils';
+import { TypographicCover } from '@/components/library/BookCard';
+import { formatFileSize, formatDate, cn } from '@/lib/utils';
+import { ArrowLeft, BookOpen, Play, RotateCcw, Clock, Calendar, Trash2, ListTree, FolderOpen, Heart, FileText } from 'lucide-react';
 
 function BookContent() {
   const searchParams = useSearchParams();
@@ -28,7 +30,7 @@ function BookContent() {
     const saved = localStorage.getItem(`bf-progress-${id}`);
     if (saved) {
       try {
-        const p = JSON.parse(saved);
+        const p = JSON.parse(saved) as { percentage?: number; currentPage?: number };
         setProgress(p.percentage || 0);
         setLastPage(p.currentPage || 1);
       } catch { /* ignore */ }
@@ -43,177 +45,233 @@ function BookContent() {
     }
   };
 
+  const LoadingShell = ({ children }: { children: React.ReactNode }) => (
+    <main className="min-h-screen bg-[#faf7f1]">
+      <Navbar />
+      {children}
+    </main>
+  );
+
   if (!id) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-6 pt-24 pb-12 text-center">
-          <h2 className="text-xl font-medium text-slate-900 mb-4">Nenhum livro selecionado</h2>
-          <button onClick={() => router.push('/library/')} className="text-blue-600 hover:underline">
+      <LoadingShell>
+        <div className="max-w-4xl mx-auto px-6 pt-28 pb-12 text-center">
+          <FolderOpen className="w-10 h-10 text-[#d8ccb9] mx-auto mb-4" />
+          <h2 className="font-serif text-xl font-semibold text-[#221d17] mb-4">Nenhum livro selecionado</h2>
+          <button
+            onClick={() => router.push('/library/')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#221d17] text-[#e9dfcd] rounded-full text-sm font-medium hover:bg-[#3a322a] transition-colors"
+          >
             Voltar à biblioteca
           </button>
         </div>
-      </main>
+      </LoadingShell>
     );
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-6 pt-24 pb-12">
-          <div className="animate-pulse flex flex-col md:flex-row gap-8">
-            <div className="w-full md:w-64 aspect-[2/3] bg-slate-200 rounded-2xl" />
+      <LoadingShell>
+        <div className="max-w-5xl mx-auto px-6 md:px-8 pt-28 pb-12">
+          <div className="animate-pulse flex flex-col md:flex-row gap-10">
+            <div className="w-full md:w-60 aspect-[2/3] bg-[#f1eadf] rounded-2xl border border-[#e6ddd0]" />
             <div className="flex-1 space-y-4">
-              <div className="h-8 bg-slate-200 rounded w-3/4" />
-              <div className="h-4 bg-slate-200 rounded w-1/2" />
+              <div className="h-8 bg-[#f1eadf] rounded w-3/4" />
+              <div className="h-4 bg-[#f1eadf] rounded w-1/2" />
+              <div className="h-24 bg-[#f1eadf] rounded-2xl w-full" />
             </div>
           </div>
         </div>
-      </main>
+      </LoadingShell>
     );
   }
 
   if (!book) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-6 pt-24 pb-12 text-center">
-          <h2 className="text-xl font-medium text-slate-900 mb-4">Livro não encontrado</h2>
-          <button onClick={() => router.push('/library/')} className="text-blue-600 hover:underline">
+      <LoadingShell>
+        <div className="max-w-4xl mx-auto px-6 pt-28 pb-12 text-center">
+          <BookOpen className="w-10 h-10 text-[#d8ccb9] mx-auto mb-4" />
+          <h2 className="font-serif text-xl font-semibold text-[#221d17] mb-4">Livro não encontrado</h2>
+          <button
+            onClick={() => router.push('/library/')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#221d17] text-[#e9dfcd] rounded-full text-sm font-medium hover:bg-[#3a322a] transition-colors"
+          >
             Voltar à biblioteca
           </button>
         </div>
-      </main>
+      </LoadingShell>
     );
   }
 
-  return (
-    <main className="min-h-screen bg-slate-50">
-      <Navbar />
-      <div className="max-w-4xl mx-auto px-6 pt-24 pb-12">
-        <button
-          onClick={() => router.push('/library/')}
-          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-6 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Biblioteca
-        </button>
+  const stats = [
+    { label: 'Páginas', value: String(book.pageCount), icon: FileText },
+    { label: 'Capítulos', value: String(book.chapters.length), icon: ListTree },
+    { label: 'Progresso', value: `${Math.round(progress)}%`, icon: BookOpen, accent: true },
+    { label: 'Tamanho', value: formatFileSize(book.originalPdfSize), icon: FileText },
+  ];
 
-        <div className="flex flex-col md:flex-row gap-8 animate-fade-in">
-          <div className="w-full md:w-64 flex-shrink-0">
-            <div className="aspect-[2/3] rounded-2xl overflow-hidden bg-slate-100 book-card-shadow">
-              {book.coverImage ? (
-                <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center p-6">
-                  <svg className="w-16 h-16 text-slate-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                  <span className="text-sm text-slate-400 text-center">{book.title}</span>
+  return (
+    <main className="min-h-screen bg-[#faf7f1]">
+      <Navbar />
+      <div className="pt-24 pb-16">
+        {/* Editorial backdrop */}
+        <div className="absolute inset-x-0 top-0 h-[340px] bg-gradient-to-b from-[#f1eadf] to-transparent pointer-events-none" />
+
+        <div className="relative max-w-5xl mx-auto px-5 md:px-8">
+          <button
+            onClick={() => router.push('/library/')}
+            className="inline-flex items-center gap-2 text-sm text-[#8b8174] hover:text-[#221d17] mb-8 transition-colors group"
+          >
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            Biblioteca
+          </button>
+
+          <div className="flex flex-col md:flex-row gap-10 animate-fade-in">
+            {/* Cover */}
+            <div className="relative w-52 md:w-60 mx-auto md:mx-0 flex-shrink-0">
+              <div className="absolute -inset-3 rounded-3xl bg-[#bb7a1c]/5 blur-2xl" />
+              <div className="relative aspect-[2/3] rounded-r-[12px] rounded-l-[6px] overflow-hidden shadow-[0_8px_20px_rgba(34,29,23,0.18),0_24px_60px_rgba(34,29,23,0.22)]">
+                {book.coverImage ? (
+                  <img src={book.coverImage} alt={book.title} className="w-full h-full object-cover" />
+                ) : (
+                  <TypographicCover book={book} className="w-full h-full" />
+                )}
+              </div>
+              {progress > 0 && (
+                <div className="absolute -right-3 top-6 w-14 h-14 rounded-full bg-[#221d17] shadow-lg flex flex-col items-center justify-center text-white">
+                  <span className="text-base font-semibold leading-none">{Math.round(progress)}%</span>
+                  <span className="text-[8px] uppercase tracking-wider opacity-70 mt-0.5">lido</span>
                 </div>
               )}
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-2.5">
+                {book.status === 'converting' ? 'Convertendo...' : book.conversionMode === 'reflow' ? 'Edição responsiva' : 'Edição preservada'}
+              </p>
+              <h1 className="font-serif text-3xl md:text-4xl font-semibold text-[#221d17] mb-2.5 tracking-tight">
+                {book.title}
+              </h1>
+              <p className="text-lg text-[#8b8174] mb-6">{book.author || 'Autor desconhecido'}</p>
+
+              {book.description && (
+                <p className="text-[15px] text-[#4b4238] mb-7 leading-relaxed max-w-2xl">
+                  {book.description}
+                </p>
+              )}
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+                {stats.map(({ label, value, icon: Icon, accent }) => (
+                  <div
+                    key={label}
+                    className={cn(
+                      'bg-white rounded-2xl p-4 border shadow-sm',
+                      accent ? 'border-[#bb7a1c]/30' : 'border-[#e6ddd0]'
+                    )}
+                  >
+                    <Icon className={cn('w-4 h-4 mb-2', accent ? 'text-[#bb7a1c]' : 'text-[#8b8174]')} strokeWidth={1.8} />
+                    <p className={cn('font-serif text-xl font-semibold', accent ? 'text-[#bb7a1c]' : 'text-[#221d17]')}>
+                      {value}
+                    </p>
+                    <p className="text-[11px] text-[#8b8174] mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-3 mb-7">
+                <button
+                  onClick={() => router.push(`/read/?id=${id}`)}
+                  className="group inline-flex items-center gap-2.5 px-7 py-3.5 bg-[#221d17] text-[#e9dfcd] rounded-full font-medium shadow-lg hover:bg-[#3a322a] hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  <Play className="w-4 h-4 transition-transform group-hover:scale-110" fill="currentColor" />
+                  {progress > 0 ? 'Continuar lendo' : 'Começar a ler'}
+                </button>
+                {progress > 0 && (
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem(`bf-progress-${id}`);
+                      setProgress(0);
+                      setLastPage(0);
+                      router.push(`/read/?id=${id}`);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#4b4238] rounded-full font-medium border border-[#e6ddd0] hover:border-[#d8ccb9] hover:bg-[#faf7f1] transition-all duration-200"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Começar do início
+                  </button>
+                )}
+                {book.isFavorite && (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#fdf0f0] text-[#e07070] text-xs font-medium border border-[#f3d7d7] self-center">
+                    <Heart className="w-3.5 h-3.5" fill="currentColor" /> Favorito
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-[#8b8174] mb-8">
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Adicionado em {formatDate(book.createdAt)}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" /> {book.originalPdfName}
+                </span>
+                {progress > 0 && lastPage > 0 && (
+                  <span className="inline-flex items-center gap-1.5 text-[#bb7a1c]">
+                    <BookOpen className="w-3.5 h-3.5" /> Você parou na página {lastPage}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">{book.title}</h1>
-            <p className="text-lg text-slate-500 mb-6">{book.author}</p>
-
-            {book.description && (
-              <p className="text-sm text-slate-600 mb-6 leading-relaxed">{book.description}</p>
-            )}
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <p className="text-2xl font-bold text-slate-900">{book.pageCount}</p>
-                <p className="text-xs text-slate-500">Páginas</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <p className="text-2xl font-bold text-slate-900">{book.chapters.length}</p>
-                <p className="text-xs text-slate-500">Capítulos</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <p className="text-2xl font-bold text-blue-600">{progress}%</p>
-                <p className="text-xs text-slate-500">Progresso</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-100">
-                <p className="text-sm font-medium text-slate-900">{formatFileSize(book.originalPdfSize)}</p>
-                <p className="text-xs text-slate-500">Tamanho</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3 mb-8">
-              <button
-                onClick={() => router.push(`/read/?id=${id}`)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-                {progress > 0 ? 'Continuar lendo' : 'Começar a ler'}
-              </button>
-              {progress > 0 && (
-                <button
-                  onClick={() => {
-                    localStorage.removeItem(`bf-progress-${id}`);
-                    setProgress(0);
-                    setLastPage(0);
-                    router.push(`/read/?id=${id}`);
-                  }}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-700 rounded-xl font-medium border border-slate-200 hover:bg-slate-50 transition-colors"
-                >
-                  Começar do início
-                </button>
-              )}
-            </div>
-
-            <div className="space-y-3 text-sm text-slate-500">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Adicionado em {formatDate(book.createdAt)}
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {book.originalPdfName}
-              </div>
-            </div>
-
-            {book.chapters.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <h3 className="font-medium text-slate-900 mb-3">Sumário</h3>
-                <div className="space-y-1.5">
-                  {book.chapters.map((ch, i) => (
-                    <button
-                      key={ch.id}
-                      onClick={() => router.push(`/read/?id=${id}&page=${ch.pageNumber}`)}
-                      className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-white transition-colors text-left group"
-                    >
-                      <span className="text-xs text-slate-400 font-mono w-6">{String(i + 1).padStart(2, '0')}</span>
-                      <span className="text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{ch.title}</span>
-                      <span className="text-xs text-slate-400 ml-auto">p. {ch.pageNumber}</span>
-                    </button>
-                  ))}
+          {/* TOC */}
+          {book.chapters.length > 0 && (
+            <div className="mt-12 animate-slide-up">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 rounded-xl bg-[#f6e8cf] flex items-center justify-center">
+                  <ListTree className="w-4 h-4 text-[#bb7a1c]" strokeWidth={1.8} />
+                </div>
+                <div>
+                  <h2 className="font-serif text-xl font-semibold text-[#221d17]">Sumário</h2>
+                  <p className="text-xs text-[#8b8174] mt-0.5">{book.chapters.length} capítulos</p>
                 </div>
               </div>
-            )}
-
-            <div className="mt-8 pt-6 border-t border-slate-100">
-              <button
-                onClick={handleDelete}
-                className="text-sm text-red-500 hover:text-red-600 transition-colors"
-              >
-                Excluir livro
-              </button>
+              <div className="grid md:grid-cols-2 gap-2">
+                {book.chapters.map((ch, i) => (
+                  <button
+                    key={ch.id}
+                    onClick={() => router.push(`/read/?id=${id}&page=${ch.pageNumber}`)}
+                    className="group flex items-center gap-3.5 w-full px-4 py-3 bg-white rounded-2xl border border-[#e6ddd0] hover:border-[#bb7a1c]/40 hover:shadow-sm transition-all text-left"
+                  >
+                    <span className="font-serif text-sm text-[#bb7a1c] tabular-nums w-7">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="text-sm text-[#221d17] font-medium group-hover:text-[#bb7a1c] transition-colors truncate">
+                      {ch.title}
+                    </span>
+                    <span className="text-xs text-[#8b8174] ml-auto font-mono shrink-0">
+                      p. {ch.pageNumber}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          {/* Danger zone */}
+          <div className="mt-12 flex items-center justify-between pt-6 border-t border-[#e6ddd0]">
+            <span className="text-xs text-[#8b8174]/70 max-w-xs">
+              Remover este livro do seu dispositivo. A operação não pode ser desfeita.
+            </span>
+            <button
+              onClick={handleDelete}
+              className="inline-flex items-center gap-2 text-sm text-[#c24040] hover:text-[#a33434] px-4 py-2 rounded-full hover:bg-[#fdf0f0] transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir livro
+            </button>
           </div>
         </div>
       </div>
@@ -224,8 +282,8 @@ function BookContent() {
 export default function BookPage() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin" />
+      <main className="min-h-screen bg-[#faf7f1] flex items-center justify-center">
+        <div className="w-9 h-9 border-[2.5px] border-[#d8ccb9] border-t-[#bb7a1c] rounded-full animate-spin" />
       </main>
     }>
       <BookContent />

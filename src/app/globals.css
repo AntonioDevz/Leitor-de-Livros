@@ -1,29 +1,36 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
   --color-accent: var(--accent);
   --color-muted: var(--muted);
   --color-border: var(--border);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
+  --color-surface: var(--paper-raised);
+  --color-surface-hover: var(--paper-deep);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-fraunces);
 }
 
 :root {
-  --background: #fafafa;
-  --foreground: #0f172a;
-  --accent: #2563eb;
-  --accent-light: #dbeafe;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
+  --paper: #faf7f1;
+  --paper-deep: #f1eadf;
+  --paper-raised: #ffffff;
+  --ink: #221d17;
+  --ink-soft: #4b4238;
+  --muted: #8b8174;
+  --accent: #bb7a1c;
+  --accent-deep: #96600f;
+  --accent-soft: #f6e8cf;
+  --border: #e6ddd0;
+  --border-strong: #d8ccb9;
   --reader-bg: #ffffff;
-  --reader-fg: #1a1a2e;
+  --reader-fg: #2a2520;
+  --shadow-sm: 0 1px 2px rgba(34, 29, 23, 0.04), 0 1px 3px rgba(34, 29, 23, 0.06);
+  --shadow-md: 0 2px 4px rgba(34, 29, 23, 0.05), 0 8px 24px rgba(34, 29, 23, 0.07);
+  --shadow-lg: 0 4px 8px rgba(34, 29, 23, 0.06), 0 16px 40px rgba(34, 29, 23, 0.1);
+  --shadow-book: 0 1px 2px rgba(34, 29, 23, 0.1), 0 4px 10px rgba(34, 29, 23, 0.12), 0 14px 30px rgba(34, 29, 23, 0.12);
 }
 
 * {
@@ -37,21 +44,29 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, h2, h3, h4, .font-display, .display-serif {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
 ::selection {
   background: var(--accent);
-  color: white;
+  color: var(--paper);
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -59,37 +74,49 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+  background: #d8cbb8;
+  border-radius: 4px;
+  border: 2px solid var(--paper);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  background: #c4b293;
 }
 
+/* ---------- Animations ---------- */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideLeft {
-  from { opacity: 0; transform: translateX(30px); }
+  from { opacity: 0; transform: translateX(24px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
 }
 
 @keyframes shimmer {
@@ -98,35 +125,42 @@ body {
 }
 
 @keyframes pageFlipEnter {
-  from { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
-  to { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+  from { transform: perspective(1400px) rotateY(-70deg); opacity: 0.4; }
+  to { transform: perspective(1400px) rotateY(0deg); opacity: 1; }
 }
 
 @keyframes pageFlipExit {
-  from { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
-  to { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
+  from { transform: perspective(1400px) rotateY(0deg); opacity: 1; }
+  to { transform: perspective(1400px) rotateY(70deg); opacity: 0.4; }
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+@keyframes bgShift {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  33% { transform: scale(1.08) translate(2%, -2%); }
+  66% { transform: scale(1.05) translate(-2%, 2%); }
 }
 
-.animate-fade-in { animation: fadeIn 0.3s ease-out; }
-.animate-slide-up { animation: slideUp 0.4s ease-out; }
+.animate-fade-in { animation: fadeIn 0.35s ease-out; }
+.animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-slide-down { animation: slideDown 0.3s ease-out; }
-.animate-slide-left { animation: slideLeft 0.4s ease-out; }
-.animate-scale-in { animation: scaleIn 0.3s ease-out; }
+.animate-slide-left { animation: slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-float { animation: float 6s ease-in-out infinite; }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.3) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.4) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
-.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-.page-flip-enter { animation: pageFlipEnter 0.5s ease-out; }
-.page-flip-exit { animation: pageFlipExit 0.5s ease-in; }
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
 
+.page-flip-enter { animation: pageFlipEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+.page-flip-exit { animation: pageFlipExit 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ---------- Reading content ---------- */
 .page-content {
   font-family: var(--reader-font, inherit);
   font-size: var(--reader-font-size, 18px);
@@ -140,11 +174,12 @@ body {
   margin: 1.5em 0 0.5em;
   font-weight: 600;
   line-height: 1.3;
+  font-family: var(--reader-font, inherit);
 }
 
-.page-content .book-heading-1 { font-size: 1.5em; }
-.page-content .book-heading-2 { font-size: 1.3em; }
-.page-content .book-heading-3 { font-size: 1.15em; }
+.page-content .book-heading-1 { font-size: 1.45em; }
+.page-content .book-heading-2 { font-size: 1.25em; }
+.page-content .book-heading-3 { font-size: 1.1em; }
 
 .page-content .book-paragraph {
   margin-bottom: calc(var(--reader-paragraph-spacing, 1) * 1em);
@@ -154,10 +189,12 @@ body {
 
 .page-content .book-quote {
   margin: 1.5em 0;
-  padding: 0.5em 1.5em;
+  padding: 0.6em 1.5em;
   border-left: 3px solid var(--accent);
   font-style: italic;
-  opacity: 0.85;
+  opacity: 0.88;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.05em;
 }
 
 .page-content .book-list {
@@ -177,25 +214,39 @@ body {
 .page-content .book-figure img {
   max-width: 100%;
   height: auto;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-.book-card-shadow {
-  box-shadow:
-    0 1px 3px rgba(0,0,0,0.08),
-    0 4px 12px rgba(0,0,0,0.04);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+.page-content .book-caption {
+  font-size: 0.85em;
+  opacity: 0.65;
+  margin-top: 0.5em;
 }
 
-.book-card-shadow:hover {
-  box-shadow:
-    0 4px 12px rgba(0,0,0,0.12),
-    0 8px 24px rgba(0,0,0,0.06);
-  transform: translateY(-2px);
+/* ---------- Cards & components ---------- */
+.book-card-hover {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
 }
 
-.reader-shadow {
-  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+.book-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 2px 4px rgba(34, 29, 23, 0.06), 0 12px 30px rgba(34, 29, 23, 0.14);
+}
+
+.paper-panel {
+  background: var(--paper-deep);
+  border: 1px solid var(--border);
+}
+
+.hairline {
+  border-color: var(--border);
+}
+
+.glass-nav {
+  background: rgba(250, 247, 241, 0.82);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid rgba(230, 221, 208, 0.7);
 }
 
 .hide-scrollbar {
@@ -206,8 +257,36 @@ body {
   display: none;
 }
 
+/* Book cover spine effect */
+.book-spine {
+  background: linear-gradient(90deg, rgba(0,0,0,0.14) 0%, transparent 18%, transparent 82%, rgba(0,0,0,0.12) 100%);
+}
+
+/* Subtle paper texture for covers */
+.cover-texture {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0,0,0,0.06) 0%, transparent 45%);
+}
+
+/* Reading page shadow */
+.reader-shadow {
+  box-shadow: 0 2px 6px rgba(34,29,23,0.08), 0 20px 50px rgba(34,29,23,0.12);
+}
+
 .highlight-yellow { background: #fef08a; }
 .highlight-green { background: #bbf7d0; }
 .highlight-blue { background: #bfdbfe; }
 .highlight-pink { background: #fbcfe8; }
 .highlight-red { background: #fecaca; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

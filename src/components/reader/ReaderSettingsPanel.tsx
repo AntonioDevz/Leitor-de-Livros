@@ -11,17 +11,17 @@ interface ReaderSettingsPanelProps {
 }
 
 const themes: { key: ReaderTheme; label: string; colors: string[] }[] = [
-  { key: 'light', label: 'Claro', colors: ['#ffffff', '#1a1a2e'] },
+  { key: 'light', label: 'Claro', colors: ['#ffffff', '#221d17'] },
   { key: 'sepia', label: 'Sépia', colors: ['#f4ecd8', '#5c4b37'] },
-  { key: 'dark', label: 'Escuro', colors: ['#1a1a2e', '#e2e8f0'] },
+  { key: 'dark', label: 'Escuro', colors: ['#1b1f2b', '#e2e8f0'] },
   { key: 'black', label: 'Preto', colors: ['#000000', '#d4d4d8'] },
-  { key: 'custom', label: 'Personalizado', colors: ['#ffffff', '#1a1a2e'] },
+  { key: 'custom', label: 'Ajuste', colors: ['#ffffff', '#221d17'] },
 ];
 
-const pageModes: { key: PageMode; label: string; icon: string }[] = [
-  { key: 'single', label: 'Uma página', icon: '1' },
-  { key: 'double', label: 'Duas páginas', icon: '2' },
-  { key: 'scroll', label: 'Scroll', icon: '↕' },
+const pageModes: { key: PageMode; label: string }[] = [
+  { key: 'single', label: 'Uma página' },
+  { key: 'double', label: 'Duas páginas' },
+  { key: 'scroll', label: 'Scroll' },
 ];
 
 const animations: { key: PageAnimation; label: string }[] = [
@@ -31,6 +31,103 @@ const animations: { key: PageAnimation; label: string }[] = [
   { key: 'none', label: 'Nenhuma' },
 ];
 
+function OptionButton({
+  active, onClick, children, theme,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  theme: ThemeConfig;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="py-2 px-3 rounded-xl text-xs font-medium border transition-all duration-200"
+      style={
+        active
+          ? { borderColor: `color-mix(in srgb, ${theme.accent} 60%, transparent)`, background: `color-mix(in srgb, ${theme.accent} 16%, transparent)`, color: theme.accent }
+          : { borderColor: theme.border, color: theme.muted, background: 'transparent' }
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+function SectionTitle({ children, theme }: { children: React.ReactNode; theme: ThemeConfig }) {
+  return (
+    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: theme.foreground }}>
+      <span className="w-1 h-4 rounded-full" style={{ background: theme.accent }} />
+      {children}
+    </h3>
+  );
+}
+
+function SliderRow({
+  label, value, display, min, max, step, onChange, theme,
+}: {
+  label: string;
+  value: number;
+  display: string;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  theme: ThemeConfig;
+}) {
+  return (
+    <div>
+      <label className="text-xs mb-1.5 flex justify-between items-center" style={{ color: theme.muted }}>
+        <span>{label}</span>
+        <span className="tabular-nums font-medium" style={{ color: theme.accent }}>{display}</span>
+      </label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+        style={{
+          accentColor: theme.accent,
+          background: `linear-gradient(to right, ${theme.accent} ${((value - min) / (max - min)) * 100}%, color-mix(in srgb, currentColor 15%, transparent) ${((value - min) / (max - min)) * 100}%)`,
+        }}
+      />
+    </div>
+  );
+}
+
+function Toggle({
+  label, checked, onChange, theme,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  theme: ThemeConfig;
+}) {
+  return (
+    <label className="flex items-center justify-between cursor-pointer select-none py-1">
+      <span className="text-sm" style={{ color: theme.foreground }}>{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className="relative w-10 h-[22px] rounded-full transition-colors duration-200"
+        style={{
+          background: checked ? theme.accent : `color-mix(in srgb, currentColor 20%, transparent)`,
+        }}
+      >
+        <span
+          className="absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+          style={{ transform: checked ? 'translateX(18px)' : 'translateX(0)' }}
+        />
+      </button>
+    </label>
+  );
+}
+
 export default function ReaderSettingsPanel({
   settings,
   onChangeSettings,
@@ -38,40 +135,75 @@ export default function ReaderSettingsPanel({
 }: ReaderSettingsPanelProps) {
   return (
     <div
-      className="absolute right-4 top-16 w-80 max-h-[80vh] overflow-y-auto rounded-2xl border shadow-xl z-30 animate-slide-down"
-      style={{ background: theme.background, borderColor: theme.border }}
+      className="absolute right-3 md:right-5 top-14 w-[21rem] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border shadow-2xl z-30 animate-slide-down hide-scrollbar"
+      style={{
+        background: theme.background,
+        borderColor: theme.border,
+        boxShadow: `0 12px 40px color-mix(in srgb, ${theme.accent} 18%, rgba(0,0,0,0.4))`,
+      }}
       onClick={(e) => e.stopPropagation()}
     >
+      <div className="sticky top-0 flex items-center justify-between px-5 py-3.5 border-b"
+        style={{ borderColor: theme.border, background: theme.background }}>
+        <p className="text-sm font-semibold" style={{ color: theme.foreground }}>Aparência</p>
+        <span className="w-5 h-[3px] rounded-full" style={{ background: `color-mix(in srgb, currentColor 25%, transparent)` }} />
+      </div>
+
       <div className="p-5 space-y-6">
         <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: theme.foreground }}>Tema</h3>
+          <SectionTitle theme={theme}>Tema</SectionTitle>
           <div className="grid grid-cols-5 gap-2">
             {themes.map((t) => (
               <button
                 key={t.key}
                 onClick={() => onChangeSettings({ ...settings, theme: t.key })}
-                className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all ${
-                  settings.theme === t.key ? 'ring-2 ring-blue-500' : ''
-                }`}
+                className="flex flex-col items-center gap-1.5 p-1.5 rounded-xl transition-all duration-200"
+                style={
+                  settings.theme === t.key
+                    ? { boxShadow: `0 0 0 2px ${theme.accent}`, background: `color-mix(in srgb, ${theme.accent} 12%, transparent)` }
+                    : { background: 'transparent' }
+                }
               >
-                <div className="w-8 h-8 rounded-full border flex items-center justify-center" style={{ background: t.colors[0], borderColor: theme.border }}>
+                <div
+                  className="w-8 h-8 rounded-full border flex items-center justify-center"
+                  style={{ background: t.colors[0], borderColor: theme.border }}
+                >
                   <div className="w-4 h-4 rounded-full" style={{ background: t.colors[1] }} />
                 </div>
-                <span className="text-[10px]" style={{ color: theme.muted }}>{t.label}</span>
+                <span className="text-[10px] leading-none" style={{ color: theme.muted }}>{t.label}</span>
               </button>
             ))}
           </div>
+          {settings.theme === 'custom' && (
+            <div className="mt-3 p-3 rounded-xl border space-y-2.5 animate-slide-down" style={{ borderColor: theme.border }}>
+              {([
+                ['Fundo', 'background', (v: string) => ({ ...settings, customTheme: { ...settings.customTheme, background: v } })],
+                ['Texto', 'foreground', (v: string) => ({ ...settings, customTheme: { ...settings.customTheme, foreground: v } })],
+                ['Destaque', 'accent', (v: string) => ({ ...settings, customTheme: { ...settings.customTheme, accent: v } })],
+              ] as const).map(([label, key, apply]) => (
+                <div key={key} className="flex items-center gap-2.5">
+                  <input
+                    type="color"
+                    value={settings.customTheme?.[key] || '#ffffff'}
+                    onChange={(e) => onChangeSettings(apply(e.target.value) as ReaderSettings)}
+                    className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0"
+                  />
+                  <span className="text-xs" style={{ color: theme.muted }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: theme.foreground }}>Tipografia</h3>
-          <div className="space-y-3">
+          <SectionTitle theme={theme}>Tipografia</SectionTitle>
+          <div className="space-y-3.5">
             <div>
               <label className="text-xs mb-1.5 block" style={{ color: theme.muted }}>Família</label>
               <select
                 value={settings.fontFamily}
                 onChange={(e) => onChangeSettings({ ...settings, fontFamily: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border text-sm"
+                className="w-full px-3 py-2 rounded-xl border text-sm focus:outline-none"
                 style={{ borderColor: theme.border, background: theme.background, color: theme.foreground }}
               >
                 {fontOptions.map((f) => (
@@ -80,74 +212,44 @@ export default function ReaderSettingsPanel({
               </select>
             </div>
 
-            <div>
-              <label className="text-xs mb-1.5 flex justify-between" style={{ color: theme.muted }}>
-                <span>Tamanho</span>
-                <span>{settings.fontSize}px</span>
-              </label>
-              <input
-                type="range"
-                min={12}
-                max={32}
-                value={settings.fontSize}
-                onChange={(e) => onChangeSettings({ ...settings, fontSize: parseInt(e.target.value) })}
-                className="w-full accent-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs mb-1.5 flex justify-between" style={{ color: theme.muted }}>
-                <span>Altura da linha</span>
-                <span>{settings.lineHeight}</span>
-              </label>
-              <input
-                type="range"
-                min={1.2}
-                max={2.5}
-                step={0.1}
-                value={settings.lineHeight}
-                onChange={(e) => onChangeSettings({ ...settings, lineHeight: parseFloat(e.target.value) })}
-                className="w-full accent-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs mb-1.5 flex justify-between" style={{ color: theme.muted }}>
-                <span>Espaçamento parágrafo</span>
-                <span>{settings.paragraphSpacing}</span>
-              </label>
-              <input
-                type="range"
-                min={0.5}
-                max={3}
-                step={0.25}
-                value={settings.paragraphSpacing}
-                onChange={(e) => onChangeSettings({ ...settings, paragraphSpacing: parseFloat(e.target.value) })}
-                className="w-full accent-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs mb-1.5 flex justify-between" style={{ color: theme.muted }}>
-                <span>Largura do conteúdo</span>
-                <span>{settings.contentWidth}px</span>
-              </label>
-              <input
-                type="range"
-                min={480}
-                max={960}
-                step={40}
-                value={settings.contentWidth}
-                onChange={(e) => onChangeSettings({ ...settings, contentWidth: parseInt(e.target.value) })}
-                className="w-full accent-blue-500"
-              />
-            </div>
+            <SliderRow
+              label="Tamanho"
+              value={settings.fontSize}
+              display={`${settings.fontSize}px`}
+              min={12} max={32} step={1}
+              onChange={(v) => onChangeSettings({ ...settings, fontSize: v })}
+              theme={theme}
+            />
+            <SliderRow
+              label="Altura da linha"
+              value={settings.lineHeight}
+              display={settings.lineHeight.toFixed(1)}
+              min={1.2} max={2.5} step={0.1}
+              onChange={(v) => onChangeSettings({ ...settings, lineHeight: v })}
+              theme={theme}
+            />
+            <SliderRow
+              label="Espaçamento do parágrafo"
+              value={settings.paragraphSpacing}
+              display={settings.paragraphSpacing.toFixed(2)}
+              min={0.5} max={3} step={0.25}
+              onChange={(v) => onChangeSettings({ ...settings, paragraphSpacing: v })}
+              theme={theme}
+            />
+            <SliderRow
+              label="Largura do conteúdo"
+              value={settings.contentWidth}
+              display={`${settings.contentWidth}px`}
+              min={480} max={960} step={40}
+              onChange={(v) => onChangeSettings({ ...settings, contentWidth: v })}
+              theme={theme}
+            />
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: theme.foreground }}>Presets</h3>
-          <div className="space-y-1.5">
+          <SectionTitle theme={theme}>Presets</SectionTitle>
+          <div className="grid grid-cols-2 gap-2">
             {typographyPresets.map((preset) => (
               <button
                 key={preset.name}
@@ -158,83 +260,67 @@ export default function ReaderSettingsPanel({
                   lineHeight: preset.lineHeight,
                   letterSpacing: preset.letterSpacing,
                 })}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-black/5 transition-colors"
-                style={{ color: theme.foreground }}
+                className="px-3 py-2.5 rounded-xl border text-sm transition-all duration-200 hover:border-current text-left"
+                style={{ borderColor: theme.border, color: theme.foreground, background: 'color-mix(in srgb, currentColor 4%, transparent)' }}
               >
-                <span className="font-medium">{preset.label}</span>
+                <span className="font-semibold block" style={{ fontFamily: preset.fontFamily }}>{preset.label}</span>
+                <span className="text-[10px]" style={{ color: theme.muted }}>AaBbCc</span>
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: theme.foreground }}>Página</h3>
+          <SectionTitle theme={theme}>Página</SectionTitle>
           <div className="grid grid-cols-3 gap-2">
             {pageModes.map((mode) => (
-              <button
+              <OptionButton
                 key={mode.key}
+                active={settings.pageMode === mode.key}
                 onClick={() => onChangeSettings({ ...settings, pageMode: mode.key })}
-                className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                  settings.pageMode === mode.key
-                    ? 'border-blue-500 bg-blue-50 text-blue-600'
-                    : ''
-                }`}
-                style={settings.pageMode !== mode.key ? { borderColor: theme.border, color: theme.muted } : {}}
+                theme={theme}
               >
                 {mode.label}
-              </button>
+              </OptionButton>
             ))}
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: theme.foreground }}>Animação</h3>
+          <SectionTitle theme={theme}>Animação</SectionTitle>
           <div className="grid grid-cols-2 gap-2">
             {animations.map((anim) => (
-              <button
+              <OptionButton
                 key={anim.key}
+                active={settings.pageAnimation === anim.key}
                 onClick={() => onChangeSettings({ ...settings, pageAnimation: anim.key })}
-                className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                  settings.pageAnimation === anim.key
-                    ? 'border-blue-500 bg-blue-50 text-blue-600'
-                    : ''
-                }`}
-                style={settings.pageAnimation !== anim.key ? { borderColor: theme.border, color: theme.muted } : {}}
+                theme={theme}
               >
                 {anim.label}
-              </button>
+              </OptionButton>
             ))}
           </div>
         </div>
 
-        <div className="space-y-2 pt-2 border-t" style={{ borderColor: theme.border }}>
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm" style={{ color: theme.foreground }}>Virar com clique</span>
-            <input
-              type="checkbox"
-              checked={settings.clickToTurn}
-              onChange={(e) => onChangeSettings({ ...settings, clickToTurn: e.target.checked })}
-              className="w-4 h-4 accent-blue-500 rounded"
-            />
-          </label>
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm" style={{ color: theme.foreground }}>Virar com swipe</span>
-            <input
-              type="checkbox"
-              checked={settings.swipeToTurn}
-              onChange={(e) => onChangeSettings({ ...settings, swipeToTurn: e.target.checked })}
-              className="w-4 h-4 accent-blue-500 rounded"
-            />
-          </label>
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-sm" style={{ color: theme.foreground }}>Salvar progresso</span>
-            <input
-              type="checkbox"
-              checked={settings.autoSaveProgress}
-              onChange={(e) => onChangeSettings({ ...settings, autoSaveProgress: e.target.checked })}
-              className="w-4 h-4 accent-blue-500 rounded"
-            />
-          </label>
+        <div className="space-y-2.5 pt-4 border-t" style={{ borderColor: theme.border }}>
+          <Toggle
+            label="Virar com clique"
+            checked={settings.clickToTurn}
+            onChange={(v) => onChangeSettings({ ...settings, clickToTurn: v })}
+            theme={theme}
+          />
+          <Toggle
+            label="Virar com swipe"
+            checked={settings.swipeToTurn}
+            onChange={(v) => onChangeSettings({ ...settings, swipeToTurn: v })}
+            theme={theme}
+          />
+          <Toggle
+            label="Salvar progresso"
+            checked={settings.autoSaveProgress}
+            onChange={(v) => onChangeSettings({ ...settings, autoSaveProgress: v })}
+            theme={theme}
+          />
         </div>
       </div>
     </div>

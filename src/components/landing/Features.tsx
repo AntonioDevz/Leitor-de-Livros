@@ -1,66 +1,112 @@
 'use client';
 
+import { FileText, BookOpen, Palette, Layers, Smartphone, Bookmark } from 'lucide-react';
+
 const features = [
   {
-    icon: '📄',
+    icon: FileText,
     title: 'Extração Inteligente',
-    description: 'Analisa e extrai textos, imagens, capítulos e estrutura do PDF automaticamente.',
+    description:
+      'Analisa o PDF e extrai textos, imagens, capítulos e a estrutura completa do documento automaticamente.',
   },
   {
-    icon: '📖',
+    icon: BookOpen,
     title: 'Leitor Premium',
-    description: 'Experiência de leitura inspirada nos melhores apps de livros digitais.',
+    description:
+      'Experiência de leitura inspirada nos melhores apps de livros digitais, com foco total no conteúdo.',
   },
   {
-    icon: '🎨',
-    title: 'Temas Personalizáveis',
-    description: 'Claro, sépia, escuro, AMOLED e personalizado. Tipografia completa.',
+    icon: Palette,
+    title: 'Temas e Tipografia',
+    description:
+      'Claro, sépia, escuro, AMOLED e personalizado — com tamanhos, fontes e espaçamentos sob medida.',
   },
   {
-    icon: '🔄',
-    title: 'Page Flip',
-    description: 'Animação realista de virar página com física suave e perspectiva.',
+    icon: Layers,
+    title: 'Page Flip Realista',
+    description:
+      'Animação suave de virar página com perspectiva e física que imitam um livro de verdade.',
   },
   {
-    icon: '📱',
+    icon: Smartphone,
     title: '100% Responsivo',
-    description: 'Desktop, tablet e smartphone. Experiência mobile como prioridade.',
+    description:
+      'Desenhado para desktop, tablet e smartphone — com o mobile como prioridade desde o início.',
   },
   {
-    icon: '🔖',
+    icon: Bookmark,
     title: 'Marcadores e Notas',
-    description: 'Destaque trechos, adicione marcadores e anote suas ideias.',
+    description:
+      'Destaque trechos, salve marcadores, escreva notas e retome exatamente onde parou.',
   },
+];
+
+const steps = [
+  { n: '01', title: 'Envie seu PDF', desc: 'Arraste o arquivo ou importe direto do seu dispositivo.' },
+  { n: '02', title: 'Processamos', desc: 'Texto, fontes, imagens e capa são extraídos localmente.' },
+  { n: '03', title: 'Leia onde quiser', desc: 'Um livro digital completo, salvo offline na sua biblioteca.' },
 ];
 
 export default function Features() {
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Tudo que você precisa
-          </h2>
-          <p className="text-lg text-slate-500 max-w-xl mx-auto">
-            Do upload ao leitor, uma experiência completa e profissional.
+    <>
+      {/* How it works */}
+      <section className="py-20 bg-[#f1eadf]">
+        <div className="max-w-6xl mx-auto px-6">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-12">
+            Como funciona
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="group p-6 rounded-2xl border border-slate-100 hover:border-slate-200 hover:bg-slate-50/50 transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center text-xl mb-4 transition-colors">
-                {feature.icon}
+          <div className="grid md:grid-cols-3 gap-10">
+            {steps.map((step) => (
+              <div key={step.n} className="relative text-center md:text-left group">
+                <div className="font-serif text-5xl font-semibold text-[#bb7a1c]/25 transition-colors group-hover:text-[#bb7a1c]/40">
+                  {step.n}
+                </div>
+                <h3 className="font-serif text-xl font-semibold text-[#221d17] mt-2 mb-2">
+                  {step.title}
+                </h3>
+                <p className="text-[#8b8174] text-[15px] leading-relaxed max-w-xs md:mx-0 mx-auto">
+                  {step.desc}
+                </p>
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">{feature.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{feature.description}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Features */}
+      <section className="py-24 bg-[#faf7f1]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-4">
+              Recursos
+            </p>
+            <h2 className="font-serif text-4xl md:text-5xl font-semibold text-[#221d17] tracking-tight mb-5">
+              Tudo que você precisa
+            </h2>
+            <p className="text-lg text-[#8b8174] max-w-xl mx-auto font-light">
+              Do upload ao leitor, uma experiência completa e profissional — sem perder nada do seu PDF.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map(({ icon: Icon, title, description }, i) => (
+              <div
+                key={title}
+                className="group relative p-7 rounded-2xl bg-[#faf7f1] border border-[#e6ddd0] hover:border-[#d8ccb9] hover:bg-white transition-all duration-300 animate-slide-up"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="absolute inset-x-7 top-0 h-[2px] rounded-full bg-[#bb7a1c] opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100 transition-all duration-300 origin-center" />
+                <div className="w-11 h-11 rounded-xl bg-[#f6e8cf] flex items-center justify-center mb-5 transition-colors group-hover:bg-[#bb7a1c] group-hover:text-white">
+                  <Icon className="w-5 h-5 text-[#bb7a1c] transition-colors group-hover:text-white" />
+                </div>
+                <h3 className="font-serif text-lg font-semibold text-[#221d17] mb-2">{title}</h3>
+                <p className="text-[#8b8174] text-sm leading-relaxed">{description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

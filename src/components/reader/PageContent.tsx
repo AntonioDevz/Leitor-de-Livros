@@ -39,10 +39,12 @@ export default function PageContent({ page, settings, theme }: PageContentProps)
         } as React.CSSProperties}
       />
       <div
-        className="mt-8 pt-4 border-t text-center text-xs opacity-40"
-        style={{ borderColor: theme.border }}
+        className="mt-8 pt-4 text-center flex items-center justify-center gap-2.5"
+        style={{ borderTop: `1px solid ${theme.border}`, color: theme.muted }}
       >
-        {page.pageNumber}
+        <span className="w-6 h-px" style={{ background: theme.border }} />
+        <span className="text-xs opacity-60 tabular-nums">{page.pageNumber}</span>
+        <span className="w-6 h-px" style={{ background: theme.border }} />
       </div>
     </div>
   );

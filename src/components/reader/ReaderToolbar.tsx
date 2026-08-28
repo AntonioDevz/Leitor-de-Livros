@@ -1,6 +1,7 @@
 'use client';
 
 import type { Book, ThemeConfig } from '@/types';
+import { ArrowLeft, ListTree, Search, Bookmark, Settings2, Ribbon } from 'lucide-react';
 
 interface ReaderToolbarProps {
   book: Book;
@@ -17,9 +18,17 @@ interface ReaderToolbarProps {
   theme: ThemeConfig;
 }
 
+function activeStyle(active: boolean, theme: ThemeConfig) {
+  return {
+    background: active ? `color-mix(in srgb, ${theme.accent} 26%, transparent)` : 'transparent',
+    color: active ? theme.accent : 'inherit',
+  };
+}
+
 export default function ReaderToolbar({
   book,
   currentPage,
+  totalPages,
   progress,
   currentChapter,
   onBack,
@@ -32,82 +41,99 @@ export default function ReaderToolbar({
 }: ReaderToolbarProps) {
   return (
     <div
-      className="flex items-center justify-between px-4 md:px-6 py-3 border-b transition-colors animate-slide-down"
-      style={{ borderColor: theme.border, color: theme.foreground, background: theme.background }}
+      className="flex items-center justify-between px-3 md:px-5 py-2.5 border-b animate-slide-down"
+      style={{
+        borderColor: theme.border,
+        color: theme.foreground,
+        background: `color-mix(in srgb, ${theme.background} 92%, ${theme.accent} 8%)`,
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+      }}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-1.5 min-w-0 flex-1">
         <button
           onClick={onBack}
-          className="p-2 rounded-lg hover:bg-black/5 transition-colors flex-shrink-0"
+          className="p-2 rounded-full transition-colors flex-shrink-0"
+          style={{ color: theme.foreground, background: 'color-mix(in srgb, currentColor 6%, transparent)' }}
+          aria-label="Voltar"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="min-w-0 hidden sm:block">
-          <p className="text-sm font-medium truncate">{book.title}</p>
+        <div className="min-w-0 hidden sm:block ml-1">
+          <p className="text-sm font-semibold truncate leading-tight">{book.title}</p>
           {currentChapter && (
-            <p className="text-xs opacity-60 truncate">{currentChapter}</p>
+            <p className="text-[11px] truncate mt-0.5" style={{ color: theme.muted }}>
+              {currentChapter}
+            </p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        <span className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium tabular-nums mr-2"
+          style={{
+            color: theme.muted,
+            background: `color-mix(in srgb, ${theme.accent} 12%, transparent)`,
+          }}
+        >
+          <span style={{ color: theme.accent }}>{Math.round(progress)}%</span>
+          <span className="opacity-50">·</span>
+          {currentPage}/{totalPages}
+        </span>
+
         <button
           onClick={() => onToggleSidebar('toc')}
-          className={cn('p-2 rounded-lg transition-colors', sidebarTab === 'toc' ? 'bg-black/10' : 'hover:bg-black/5')}
+          className="p-2 rounded-full transition-all"
+          style={activeStyle(sidebarTab === 'toc', theme)}
+          aria-label="Sumário"
           title="Sumário"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
+          <ListTree className="w-5 h-5" strokeWidth={1.8} />
         </button>
 
         <button
           onClick={() => onToggleSidebar('search')}
-          className={cn('p-2 rounded-lg transition-colors', sidebarTab === 'search' ? 'bg-black/10' : 'hover:bg-black/5')}
+          className="p-2 rounded-full transition-all"
+          style={activeStyle(sidebarTab === 'search', theme)}
+          aria-label="Pesquisar"
           title="Pesquisar"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <Search className="w-5 h-5" strokeWidth={1.8} />
         </button>
 
         <button
           onClick={onBookmark}
-          className={cn('p-2 rounded-lg transition-colors', isBookmarked ? 'text-yellow-500' : 'hover:bg-black/5')}
+          className="p-2 rounded-full transition-all"
+          style={{
+            color: isBookmarked ? theme.accent : 'inherit',
+            background: isBookmarked ? `color-mix(in srgb, ${theme.accent} 20%, transparent)` : 'transparent',
+          }}
+          aria-label="Marcar página"
           title="Marcar página"
         >
-          <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
+          <Ribbon className="w-5 h-5" strokeWidth={1.8} fill={isBookmarked ? theme.accent : 'none'} />
         </button>
 
         <button
           onClick={() => onToggleSidebar('bookmarks')}
-          className={cn('p-2 rounded-lg transition-colors hidden sm:flex', sidebarTab === 'bookmarks' ? 'bg-black/10' : 'hover:bg-black/5')}
+          className="p-2 rounded-full transition-all hidden sm:block"
+          style={activeStyle(sidebarTab === 'bookmarks', theme)}
+          aria-label="Marcadores"
           title="Marcadores"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
+          <Bookmark className="w-5 h-5" strokeWidth={1.8} />
         </button>
 
         <button
           onClick={onSettings}
-          className="p-2 rounded-lg hover:bg-black/5 transition-colors"
+          className="p-2 rounded-full transition-all"
+          style={{ color: 'inherit', background: 'color-mix(in srgb, currentColor 6%, transparent)' }}
+          aria-label="Configurações"
           title="Configurações"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <Settings2 className="w-5 h-5" strokeWidth={1.8} />
         </button>
       </div>
     </div>
   );
-}
-
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ');
 }
