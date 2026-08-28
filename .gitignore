@@ -36,3 +36,16 @@ next-env.d.ts
 
 # local storage data (browser)
 *.local
+
+# capacitor / android
+android/.gradle/
+android/local.properties
+android/app/build/
+android/app/src/main/assets/public/
+android/capacitor-cordova-android-plugins/
+android/.idea/
+
+
+# local pdf.js worker (copied by prepare-pdfjs-worker.mjs)
+public/pdfjs/
+

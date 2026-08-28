@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import MigrationRunner from "@/components/MigrationRunner";
+import NativePlatform from "@/components/NativePlatform";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col antialiased">
         <MigrationRunner />
+        <NativePlatform />
         {children}
       </body>
     </html>

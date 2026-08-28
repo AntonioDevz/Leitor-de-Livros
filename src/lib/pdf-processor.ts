@@ -25,7 +25,11 @@ async function getPdfjsLib() {
   if (!pdfjsLib) {
     pdfjsLib = await import('pdfjs-dist');
     if (typeof window !== 'undefined') {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      // NEXT_PUBLIC_PDFJS_WORKER is inlined by the Capacitor/APK build (local,
+      // offline-friendly asset). The web build keeps the CDN fallback.
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        process.env.NEXT_PUBLIC_PDFJS_WORKER ||
+        `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
     }
   }
   return pdfjsLib;

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BookFlow</string>
+    <string name="title_activity_main">BookFlow</string>
+    <string name="package_name">com.bookflow.reader</string>
+    <string name="custom_url_scheme">com.bookflow.reader</string>
+</resources>

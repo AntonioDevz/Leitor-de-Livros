@@ -11,6 +11,8 @@ import ReaderSettingsPanel from '@/components/reader/ReaderSettingsPanel';
 import PageContent from '@/components/reader/PageContent';
 import PageFlipSheet from '@/components/reader/PageFlipSheet';
 import SidebarPanel from '@/components/reader/SidebarPanel';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { Menu } from 'lucide-react';
 
 const EASE_OUT_CUBIC = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -145,14 +147,22 @@ function ReaderContent() {
     reader.setShowControls(!reader.showControls);
   }, [reader]);
 
+  // In the Capacitor APK the WebView has no browser chrome, so the native
+  // status bar is hidden while reading (immersive) and restored afterwards.
+  const setNativeFullscreen = useCallback((on: boolean) => {
+    if (!Capacitor.isNativePlatform()) return;
+    (on ? StatusBar.hide() : StatusBar.show()).catch(() => {});
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     if (typeof document === 'undefined') return;
+    setNativeFullscreen(!document.fullscreenElement);
     if (document.fullscreenElement) {
       document.exitFullscreen?.().catch(() => {});
     } else {
       document.documentElement.requestFullscreen?.().catch(() => {});
     }
-  }, []);
+  }, [setNativeFullscreen]);
 
   // First reading gesture enters fullscreen automatically so the browser
   // search/address bar disappears and the book fills the whole screen.
@@ -165,16 +175,26 @@ function ReaderContent() {
     fullscreenRequestedRef.current = true;
     window.setTimeout(() => {
       if (!document.fullscreenElement) {
+        setNativeFullscreen(true);
         document.documentElement.requestFullscreen?.().catch(() => {});
       }
     }, 120);
-  }, []);
+  }, [setNativeFullscreen]);
 
   useEffect(() => {
-    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onFsChange = () => {
+      const on = !!document.fullscreenElement;
+      setIsFullscreen(on);
+      setNativeFullscreen(on);
+    };
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
-  }, []);
+  }, [setNativeFullscreen]);
+
+  // Restore the status bar when leaving the reader.
+  useEffect(() => {
+    return () => setNativeFullscreen(false);
+  }, [setNativeFullscreen]);
 
   // Auto-hide controls for an immersive book feel
   useEffect(() => {
