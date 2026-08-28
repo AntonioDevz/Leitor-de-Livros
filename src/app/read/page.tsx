@@ -37,8 +37,8 @@ function ReaderContent() {
   const [flip, setFlip] = useState<FlipState>({ dir: null, progress: 0, phase: 'idle', lift: 0 });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
-  const gestureRef = useRef<{ pointerId: number | null; startX: number; startY: number; moved: boolean; width: number }>({
-    pointerId: null, startX: 0, startY: 0, moved: false, width: 0,
+  const gestureRef = useRef<{ pointerId: number | null; startX: number; startY: number; moved: boolean; width: number; lastX: number; lastT: number }>({
+    pointerId: null, startX: 0, startY: 0, moved: false, width: 0, lastX: 0, lastT: 0,
   });
   const animFrameRef = useRef<number | null>(null);
   const flipStateRef = useRef(flip);
@@ -93,7 +93,7 @@ function ReaderContent() {
       if (reader.settings.pageMode === 'single') {
         if (dir === 'next' && reader.currentPage >= reader.totalPages) return;
         if (dir === 'prev' && reader.currentPage <= 1) return;
-        animateFlip(dir, 0, 1, 480, () => commitFlip(dir));
+        animateFlip(dir, 0, 1, 260, () => commitFlip(dir));
         return;
       }
       // double mode -> animate the spread
@@ -103,7 +103,7 @@ function ReaderContent() {
       setTimeout(() => {
         commitFlip(dir);
         setAnimating(null);
-      }, 320);
+      }, 240);
     },
     [reader, animateFlip, commitFlip]
   );
@@ -202,7 +202,7 @@ function ReaderContent() {
       stopFlipAnim();
       const stage = stageRef.current;
       const width = stage?.getBoundingClientRect().width || 0;
-      gestureRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, width };
+      gestureRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, width, lastX: e.clientX, lastT: performance.now() };
       try {
         stage?.setPointerCapture(e.pointerId);
       } catch { /* ignore */ }
@@ -217,9 +217,12 @@ function ReaderContent() {
       const dx = g.startX - e.clientX;
       const dy = g.startY - e.clientY;
       if (!g.moved) {
-        if (Math.hypot(dx, dy) < 8) return;
+        if (Math.hypot(dx, dy) < 6) return;
         g.moved = true;
       }
+      const now = performance.now();
+      g.lastX = e.clientX;
+      g.lastT = now;
       if (reader.settings.pageMode !== 'single' || reader.settings.reduceAnimations) {
         return; // treat as swipe; decide on release
       }
@@ -227,9 +230,9 @@ function ReaderContent() {
       if (dir === 'next' && reader.currentPage >= reader.totalPages) return;
       if (dir === 'prev' && reader.currentPage <= 1) return;
 
-      // paper-like resistance: finger leads, page follows with slight lag
-      const raw = Math.min(1, Math.abs(dx) / (g.width * 0.85));
-      const eased = clamp01(raw * 1.18);
+      // finger leads, page follows: half the stage width turns the full page
+      const raw = Math.min(1, Math.abs(dx) / (g.width * 0.5));
+      const eased = clamp01(raw * 1.15);
       // the sheet rides up and down with the finger while dragging
       const liftPx = clamp(-dy * 0.4, -80, 46);
       setFlip((f) =>
@@ -272,17 +275,22 @@ function ReaderContent() {
       if (state.phase === 'idle' || !state.dir) {
         // swipe on non-flip modes / double mode
         const dx = g.startX - e.clientX;
-        if (Math.abs(dx) > 45) {
+        if (Math.abs(dx) > 35) {
           triggerFlip(dx > 0 ? 'next' : 'prev');
         }
         return;
       }
-      if (state.progress > 0.4) {
-        animateFlip(state.dir, state.progress, 1, (1 - state.progress) * 420 + 120, () =>
+      const flipped = state.progress > 0.22;
+      const dt = Math.max(1, performance.now() - g.lastT);
+      const vx = Math.abs(g.startX - e.clientX) / dt; // px per ms
+      // a fast intentional flick turns the page even if the drag was short
+      const isFlick = Math.abs(g.startX - e.clientX) > 40 && vx > 0.45;
+      if (flipped || isFlick) {
+        animateFlip(state.dir, state.progress, 1, (1 - state.progress) * 240 + 80, () =>
           commitFlip(state.dir!)
         );
       } else {
-        animateFlip(state.dir, state.progress, 0, state.progress * 380 + 80, () =>
+        animateFlip(state.dir, state.progress, 0, state.progress * 220 + 70, () =>
           setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 })
         );
       }
@@ -293,7 +301,7 @@ function ReaderContent() {
   const handlePointerCancel = useCallback(() => {
     const state = flipStateRef.current;
     if (state.phase === 'drag' && state.dir) {
-      animateFlip(state.dir, state.progress, 0, 160, () => setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 }));
+      animateFlip(state.dir, state.progress, 0, 120, () => setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 }));
     }
     gestureRef.current.pointerId = null;
   }, [animateFlip]);
@@ -375,7 +383,7 @@ function ReaderContent() {
       <div
         ref={stageRef}
         className="reader-stage"
-        style={{ touchAction: pageMode === 'scroll' ? 'pan-y' : 'none' }}
+        style={{ touchAction: pageMode === 'scroll' ? 'pan-y' : 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
