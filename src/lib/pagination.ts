@@ -86,11 +86,11 @@ export function paginateBook(
   const innerH = opts.viewportH - 2 * padV;
   const fontPx = Math.min(opts.fontSize, opts.viewportW * 0.045 + 9.6); // min(fontSize, 4.5vw + 0.6rem)
   const lineH = fontPx * opts.lineHeight;
-  const charW = ((opts.serif ? 0.55 : 0.5) + opts.letterSpacing) * fontPx;
+  const charW = ((opts.serif ? 0.51 : 0.46) + opts.letterSpacing) * fontPx;
   const charsPerLine = Math.max(10, Math.floor(innerW / charW));
-  const footerReserve = 60; // footer bar + breathing space
+  const footerReserve = 54; // footer bar + breathing space
   const usable = Math.max(220, innerH - footerReserve);
-  const target = usable * 0.96;
+  const target = usable * 0.99;
   const paraGap = opts.paragraphSpacing * fontPx;
 
   // ---- convert blocks into line pieces
