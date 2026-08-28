@@ -1,6 +1,4 @@
-'use client';
-
-import { FileText, BookOpen, Palette, Layers, Smartphone, Bookmark } from 'lucide-react';
+import { FileText, BookOpen, Palette, Layers, Smartphone, Bookmark, UploadCloud, Wand2 } from 'lucide-react';
 
 const features = [
   {
@@ -42,52 +40,72 @@ const features = [
 ];
 
 const steps = [
-  { n: '01', title: 'Envie seu PDF', desc: 'Arraste o arquivo ou importe direto do seu dispositivo.' },
-  { n: '02', title: 'Processamos', desc: 'Texto, fontes, imagens e capa são extraídos localmente.' },
-  { n: '03', title: 'Leia onde quiser', desc: 'Um livro digital completo, salvo offline na sua biblioteca.' },
+  {
+    n: '01',
+    icon: UploadCloud,
+    title: 'Envie seu PDF',
+    desc: 'Arraste o arquivo ou importe direto do seu dispositivo. Até 200MB.',
+  },
+  {
+    n: '02',
+    icon: Wand2,
+    title: 'Processamos',
+    desc: 'Texto, fontes, imagens e capa são extraídos — tudo localmente, sem servidores.',
+  },
+  {
+    n: '03',
+    icon: BookOpen,
+    title: 'Leia onde quiser',
+    desc: 'Um livro digital completo, salvo offline na sua biblioteca.',
+  },
 ];
 
 export default function Features() {
   return (
     <>
       {/* How it works */}
-      <section className="py-20 lg:py-24 bg-[#f1eadf]">
+      <section className="py-20 bg-white border-b border-[#ece6da]">
         <div className="max-w-6xl mx-auto px-5 md:px-8">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-14">
-            Como funciona
-          </p>
-          <div className="relative">
-            <div className="hidden md:block absolute top-6 left-[16.67%] right-[16.67%] h-px bg-gradient-to-r from-transparent via-[#d8ccb9] to-transparent" aria-hidden />
-            <div className="grid md:grid-cols-3 gap-12 md:gap-8">
-              {steps.map((step) => (
-                <div key={step.n} className="relative flex flex-col items-center text-center">
-                  <div className="w-12 h-12 rounded-full bg-white border border-[#e6ddd0] shadow-sm flex items-center justify-center font-serif text-lg font-semibold text-[#bb7a1c]">
-                    {step.n}
-                  </div>
-                  <h3 className="font-serif text-xl font-semibold text-[#221d17] mt-5 mb-2">
-                    {step.title}
-                  </h3>
-                  <p className="text-[#8b8174] text-[15px] leading-relaxed max-w-[16rem]">
-                    {step.desc}
-                  </p>
+          <div className="max-w-2xl mb-12">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#bb7a1c] mb-3">
+              Como funciona
+            </p>
+            <h2 className="font-serif text-3xl lg:text-4xl font-semibold text-[#211d18] tracking-tight">
+              Do upload à primeira página em três passos
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {steps.map(({ n, icon: Icon, title, desc }) => (
+              <div
+                key={n}
+                className="relative flex flex-col p-7 rounded-2xl border border-[#ece6da] bg-[#fbf9f4]"
+              >
+                <span className="absolute top-6 right-6 font-serif text-lg font-medium text-[#d6cdbb]">
+                  {n}
+                </span>
+                <div className="w-11 h-11 rounded-xl bg-white border border-[#ece6da] flex items-center justify-center mb-5 shadow-sm">
+                  <Icon className="w-5 h-5 text-[#bb7a1c]" strokeWidth={1.8} />
                 </div>
-              ))}
-            </div>
+                <h3 className="font-serif text-lg font-semibold text-[#211d18] mb-2">{title}</h3>
+                <p className="text-[#6f675c] text-sm leading-relaxed">{desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="py-20 lg:py-24 bg-[#faf7f1]">
+      <section className="py-20 lg:py-24 bg-[#fbf9f4]">
         <div className="max-w-6xl mx-auto px-5 md:px-8">
-          <div className="text-center mb-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#bb7a1c] mb-4">
+          <div className="max-w-2xl mb-12">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#bb7a1c] mb-3">
               Recursos
             </p>
-            <h2 className="font-serif text-4xl md:text-5xl font-semibold text-[#221d17] tracking-tight mb-5">
+            <h2 className="font-serif text-3xl lg:text-4xl font-semibold text-[#211d18] tracking-tight mb-4">
               Tudo que você precisa
             </h2>
-            <p className="text-lg text-[#8b8174] max-w-xl mx-auto font-light">
+            <p className="text-[#6f675c] text-lg leading-relaxed">
               Do upload ao leitor, uma experiência completa e profissional — sem perder nada do seu PDF.
             </p>
           </div>
@@ -96,15 +114,14 @@ export default function Features() {
             {features.map(({ icon: Icon, title, description }, i) => (
               <div
                 key={title}
-                className="group relative p-7 rounded-2xl bg-white border border-[#e6ddd0] hover:border-[#d8ccb9] hover:shadow-[0_12px_32px_rgba(34,29,23,0.08)] transition-all duration-300 animate-slide-up h-full flex flex-col"
-                style={{ animationDelay: `${i * 80}ms` }}
+                className="group relative p-7 rounded-2xl bg-white border border-[#ece6da] hover:border-[#d6cdbb] hover:shadow-[0_14px_36px_rgba(28,24,18,0.08)] transition-all duration-300 animate-slide-up h-full flex flex-col"
+                style={{ animationDelay: `${i * 60}ms` }}
               >
-                <div className="absolute inset-x-7 top-0 h-[2px] rounded-full bg-[#bb7a1c] opacity-0 scale-x-0 group-hover:opacity-100 group-hover:scale-x-100 transition-all duration-300 origin-center" />
-                <div className="w-11 h-11 rounded-xl bg-[#f6e8cf] flex items-center justify-center mb-5 transition-colors group-hover:bg-[#bb7a1c] group-hover:text-white">
-                  <Icon className="w-5 h-5 text-[#bb7a1c] transition-colors group-hover:text-white" />
+                <div className="w-11 h-11 rounded-xl bg-[#f7f0e0] flex items-center justify-center mb-5 transition-colors group-hover:bg-[#bb7a1c] group-hover:text-white">
+                  <Icon className="w-5 h-5 text-[#b97a1c] transition-colors group-hover:text-white" strokeWidth={1.8} />
                 </div>
-                <h3 className="font-serif text-lg font-semibold text-[#221d17] mb-2">{title}</h3>
-                <p className="text-[#8b8174] text-sm leading-relaxed">{description}</p>
+                <h3 className="font-serif text-lg font-semibold text-[#211d18] mb-2">{title}</h3>
+                <p className="text-[#6f675c] text-sm leading-relaxed">{description}</p>
               </div>
             ))}
           </div>

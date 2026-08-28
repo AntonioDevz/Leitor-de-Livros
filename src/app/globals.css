@@ -137,18 +137,6 @@ h1, h2, h3, h4, .font-display, .display-serif {
   to { transform: perspective(1400px) rotateY(70deg); opacity: 0.4; }
 }
 
-@keyframes bgShift {
-  0%, 100% { transform: scale(1) translate(0, 0); }
-  33% { transform: scale(1.08) translate(2%, -2%); }
-  66% { transform: scale(1.05) translate(-2%, 2%); }
-}
-
-@keyframes conversionFill {
-  0% { transform: translateX(0); width: 18%; }
-  50% { transform: translateX(60%); width: 42%; }
-  100% { transform: translateX(100%); width: 18%; }
-}
-
 .animate-fade-in { animation: fadeIn 0.35s ease-out; }
 .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-slide-down { animation: slideDown 0.3s ease-out; }
