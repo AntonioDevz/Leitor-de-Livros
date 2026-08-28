@@ -59,6 +59,17 @@ http://localhost:3000
 | `npm run build` | Gera build de produção |
 | `npm run start` | Inicia servidor de produção |
 | `npm run lint` | Verifica código com ESLint |
+| `npm run build:android` | Build web para o app Android + `cap sync` |
+
+## App Android (APK)
+
+O BookFlow também é distribuído como **aplicativo Android** (Capacitor) — o
+mesmo leitor e biblioteca local, instalável no celular.
+
+- 📦 **APK pronto para instalar:** pasta [`apk/`](apk/) (`bookflow-debug.apk`);
+- 📖 **Documentação da adaptação mobile:** [`docs/mobile-app.md`](docs/mobile-app.md);
+- 🤖 **Build do APK:** workflow "Build Android APK" nas GitHub Actions
+  (disparo manual → baixar artefato `bookflow-debug.apk`).
 
 ## Stack Tecnológica
 
@@ -68,6 +79,8 @@ http://localhost:3000
 - **PDF:** pdf.js (pdfjs-dist)
 - **Armazenamento:** IndexedDB (local)
 - **Ícones:** Lucide React
+- **Mobile:** Capacitor 8 (`@capacitor/core`, `@capacitor/android`,
+  `@capacitor/app`, `@capacitor/status-bar`)
 
 ## Estrutura do Projeto
 
