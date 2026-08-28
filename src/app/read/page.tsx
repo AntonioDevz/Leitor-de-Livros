@@ -11,15 +11,18 @@ import ReaderSettingsPanel from '@/components/reader/ReaderSettingsPanel';
 import PageContent from '@/components/reader/PageContent';
 import PageFlipSheet from '@/components/reader/PageFlipSheet';
 import SidebarPanel from '@/components/reader/SidebarPanel';
+import { Menu } from 'lucide-react';
 
 const EASE_OUT_CUBIC = (t: number) => 1 - Math.pow(1 - t, 3);
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 type FlipDir = 'next' | 'prev';
 interface FlipState {
   dir: FlipDir | null;
   progress: number;
   phase: 'idle' | 'drag' | 'commit';
+  lift: number;
 }
 
 function ReaderContent() {
@@ -31,7 +34,8 @@ function ReaderContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'toc' | 'bookmarks' | 'search' | null>(null);
   const [animating, setAnimating] = useState<FlipDir | null>(null);
-  const [flip, setFlip] = useState<FlipState>({ dir: null, progress: 0, phase: 'idle' });
+  const [flip, setFlip] = useState<FlipState>({ dir: null, progress: 0, phase: 'idle', lift: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const gestureRef = useRef<{ pointerId: number | null; startX: number; startY: number; moved: boolean; width: number }>({
     pointerId: null, startX: 0, startY: 0, moved: false, width: 0,
@@ -53,7 +57,7 @@ function ReaderContent() {
     (dir: FlipDir) => {
       if (dir === 'next') reader.nextPage();
       else reader.prevPage();
-      setFlip({ dir: null, progress: 0, phase: 'idle' });
+      setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 });
     },
     [reader]
   );
@@ -66,7 +70,7 @@ function ReaderContent() {
         const raw = clamp01((now - start) / duration);
         const eased = EASE_OUT_CUBIC(raw);
         const value = from + (to - from) * eased;
-        setFlip((f) => ({ ...f, dir, progress: value, phase: 'commit' }));
+        setFlip((f) => ({ ...f, dir, progress: value, phase: 'commit', lift: 0 }));
         if (raw < 1) {
           animFrameRef.current = requestAnimationFrame(step);
         } else {
@@ -127,6 +131,21 @@ function ReaderContent() {
   const toggleControls = useCallback(() => {
     reader.setShowControls(!reader.showControls);
   }, [reader]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
 
   // Auto-hide controls for an immersive book feel
   useEffect(() => {
@@ -211,8 +230,12 @@ function ReaderContent() {
       // paper-like resistance: finger leads, page follows with slight lag
       const raw = Math.min(1, Math.abs(dx) / (g.width * 0.85));
       const eased = clamp01(raw * 1.18);
+      // the sheet rides up and down with the finger while dragging
+      const liftPx = clamp(-dy * 0.4, -80, 46);
       setFlip((f) =>
-        f.dir !== dir ? { dir, progress: 0.04, phase: 'drag' } : { dir, progress: eased, phase: 'drag' }
+        f.dir !== dir
+          ? { dir, progress: 0.04, phase: 'drag', lift: liftPx }
+          : { dir, progress: eased, phase: 'drag', lift: liftPx }
       );
     },
     [reader.settings.pageMode, reader.settings.reduceAnimations, reader.currentPage, reader.totalPages]
@@ -260,7 +283,7 @@ function ReaderContent() {
         );
       } else {
         animateFlip(state.dir, state.progress, 0, state.progress * 380 + 80, () =>
-          setFlip({ dir: null, progress: 0, phase: 'idle' })
+          setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 })
         );
       }
     },
@@ -270,7 +293,7 @@ function ReaderContent() {
   const handlePointerCancel = useCallback(() => {
     const state = flipStateRef.current;
     if (state.phase === 'drag' && state.dir) {
-      animateFlip(state.dir, state.progress, 0, 160, () => setFlip({ dir: null, progress: 0, phase: 'idle' }));
+      animateFlip(state.dir, state.progress, 0, 160, () => setFlip({ dir: null, progress: 0, phase: 'idle', lift: 0 }));
     }
     gestureRef.current.pointerId = null;
   }, [animateFlip]);
@@ -325,29 +348,34 @@ function ReaderContent() {
 
   return (
     <div
-      className={`min-h-screen h-dvh flex flex-col transition-colors duration-300 ${themeClass} ${reader.showControls ? 'controls-visible' : ''}`}
+      className={`h-dvh relative overflow-hidden flex flex-col transition-colors duration-300 ${themeClass} ${reader.showControls ? 'controls-visible' : ''}`}
       style={{ background: theme.background, color: theme.foreground }}
     >
       {reader.showControls && (
-        <ReaderToolbar
-          book={book}
-          currentPage={reader.currentPage}
-          totalPages={reader.totalPages}
-          progress={reader.progress}
-          currentChapter={currentChapter?.title}
-          onBack={() => router.push(`/book/?id=${bookId}`)}
-          onSettings={() => setShowSettings(!showSettings)}
-          onBookmark={() => reader.addBookmark()}
-          isBookmarked={reader.bookmarks.some((b) => b.pageNumber === reader.currentPage)}
-          onToggleSidebar={(tab) => setSidebarTab(sidebarTab === tab ? null : tab)}
-          sidebarTab={sidebarTab}
-          theme={theme}
-        />
+        <div className="absolute inset-x-0 top-0 z-20 animate-slide-down">
+          <ReaderToolbar
+            book={book}
+            currentPage={reader.currentPage}
+            totalPages={reader.totalPages}
+            progress={reader.progress}
+            currentChapter={currentChapter?.title}
+            onBack={() => router.push(`/book/?id=${bookId}`)}
+            onSettings={() => setShowSettings(!showSettings)}
+            onBookmark={() => reader.addBookmark()}
+            isBookmarked={reader.bookmarks.some((b) => b.pageNumber === reader.currentPage)}
+            onToggleSidebar={(tab) => setSidebarTab(sidebarTab === tab ? null : tab)}
+            sidebarTab={sidebarTab}
+            theme={theme}
+            isFullscreen={isFullscreen}
+            onFullscreenToggle={toggleFullscreen}
+          />
+        </div>
       )}
 
       <div
         ref={stageRef}
         className="reader-stage"
+        style={{ touchAction: pageMode === 'scroll' ? 'pan-y' : 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
@@ -411,7 +439,7 @@ function ReaderContent() {
                   back={flipBack}
                   direction={flip.dir as FlipDir}
                   progress={flip.progress}
-                  animated={false}
+                  lift={flip.lift}
                   settings={reader.settings}
                   theme={theme}
                 />
@@ -486,12 +514,37 @@ function ReaderContent() {
             <div className="tap-zone-hint tap-zone-hint--right" />
           </>
         )}
+
+        {/* Minimal floating button to reopen the menu when controls are hidden */}
+        {!reader.showControls && !showSettings && !sidebarTab && pageMode !== 'scroll' && (
+          <button
+            onClick={toggleControls}
+            className="absolute bottom-4 right-4 z-30 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 animate-fade-in"
+            style={{
+              color: theme.foreground,
+              background: `color-mix(in srgb, ${theme.foreground} 7%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${theme.foreground} 14%, transparent)`,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+            aria-label="Abrir menu do leitor"
+            title="Menu"
+          >
+            <Menu className="w-5 h-5" strokeWidth={1.8} />
+          </button>
+        )}
       </div>
 
       {reader.showControls && (
         <div
-          className="flex items-center justify-between px-4 py-2 transition-colors safe-bottom"
-          style={{ color: theme.muted }}
+          className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-4 py-2 transition-colors safe-bottom animate-slide-up"
+          style={{
+            color: theme.muted,
+            background: `color-mix(in srgb, ${theme.background} 88%, transparent)`,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderTop: `1px solid color-mix(in srgb, ${theme.foreground} 8%, transparent)`,
+          }}
         >
           <div className="flex items-center gap-2.5 px-2 text-[11px] tabular-nums">
             <span className="font-medium" style={{ color: theme.foreground }}>{reader.currentPage}</span>

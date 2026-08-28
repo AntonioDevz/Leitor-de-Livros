@@ -1,7 +1,7 @@
 'use client';
 
 import type { Book, ThemeConfig } from '@/types';
-import { ArrowLeft, ListTree, Search, Bookmark, Settings2, Ribbon } from 'lucide-react';
+import { ArrowLeft, ListTree, Search, Bookmark, Settings2, Ribbon, Maximize2, Minimize2 } from 'lucide-react';
 
 interface ReaderToolbarProps {
   book: Book;
@@ -16,6 +16,8 @@ interface ReaderToolbarProps {
   onToggleSidebar: (tab: 'toc' | 'bookmarks' | 'search') => void;
   sidebarTab: 'toc' | 'bookmarks' | 'search' | null;
   theme: ThemeConfig;
+  isFullscreen: boolean;
+  onFullscreenToggle: () => void;
 }
 
 function activeStyle(active: boolean, theme: ThemeConfig) {
@@ -38,6 +40,8 @@ export default function ReaderToolbar({
   onToggleSidebar,
   sidebarTab,
   theme,
+  isFullscreen,
+  onFullscreenToggle,
 }: ReaderToolbarProps) {
   return (
     <div
@@ -132,6 +136,16 @@ export default function ReaderToolbar({
           title="Configurações"
         >
           <Settings2 className="w-5 h-5" strokeWidth={1.8} />
+        </button>
+
+        <button
+          onClick={onFullscreenToggle}
+          className="p-2 rounded-full transition-all hidden sm:flex"
+          style={{ color: 'inherit', background: 'color-mix(in srgb, currentColor 6%, transparent)' }}
+          aria-label={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+          title={isFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+        >
+          {isFullscreen ? <Minimize2 className="w-5 h-5" strokeWidth={1.8} /> : <Maximize2 className="w-5 h-5" strokeWidth={1.8} />}
         </button>
       </div>
     </div>

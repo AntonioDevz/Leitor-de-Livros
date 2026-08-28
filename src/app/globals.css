@@ -340,7 +340,7 @@ h1, h2, h3, h4, .font-display, .display-serif {
 /* ---------- Reading content ---------- */
 .page-content {
   font-family: var(--reader-font, inherit);
-  font-size: var(--reader-font-size, 18px);
+  font-size: min(var(--reader-font-size, 18px), calc(4.5vw + 0.6rem));
   font-weight: var(--reader-font-weight, 400);
   line-height: var(--reader-line-height, 1.7);
   letter-spacing: var(--reader-letter-spacing, 0);
