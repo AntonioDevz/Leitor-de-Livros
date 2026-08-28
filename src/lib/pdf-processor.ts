@@ -38,19 +38,33 @@ function cleanText(text: string): string {
     .trim();
 }
 
+/** Uppercase and strip accents so /i matching is reliable across CAPITULO/CAPÍTULO etc. */
+function normalize(text: string): string {
+  return text
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 function detectChapter(text: string): { isChapter: boolean; title: string; level: number } | null {
+  const plain = normalize(text);
   const patterns = [
-    { regex: /^(CAPÍTULO|CHAPTER|Parte|PART)\s+[\dIVXLCDM]+/i, level: 1 },
-    { regex: /^(CAP\.\s*\d+|Capítulo\s+\d+)/i, level: 1 },
+    { regex: /^(CAPITULO|CHAPTER|PARTE|PART)\s+[\dIVXLCDM]+/, level: 1 },
+    { regex: /^(CAP\.\s*\d+|CAPITULO\s+\d+)/, level: 1 },
     { regex: /^(\d+\.\s+[A-ZÀ-Ú])/m, level: 2 },
     { regex: /^([IVXLCDM]+[\.\)–—-]\s+[A-ZÀ-Ú])/m, level: 1 },
-    { regex: /^(SUMÁRIO|ÍNDICE|TABLE OF CONTENTS|CONTENTS)/i, level: 0 },
+    { regex: /^(SUMARIO|INDICE|TABLE OF CONTENTS|CONTENTS)/, level: 0 },
   ];
 
   for (const { regex, level } of patterns) {
-    const match = text.match(regex);
+    const match = plain.match(regex);
     if (match) {
-      return { isChapter: true, title: match[0].trim(), level };
+      const start = match.index ?? 0;
+      return {
+        isChapter: true,
+        title: text.substr(start, match[0].length).trim() || match[0].trim(),
+        level,
+      };
     }
   }
   return null;
