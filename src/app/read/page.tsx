@@ -286,6 +286,10 @@ function ReaderContent() {
       const vx = movedPx / dt; // px per ms
       // a fast intentional flick turns the page even if the drag was short (but not a nudge)
       const isFlick = movedPx > Math.max(48, g.width * 0.08) && vx > 0.35;
+      // Mark the phase synchronously in the ref: browsers fire pointerleave right
+      // after pointerup on touch, and React's state update is async, so without
+      // this the leave handler would read a stale 'drag' and snap the flip back.
+      flipStateRef.current = { ...state, phase: 'commit' };
       if (flipped || isFlick) {
         animateFlip(state.dir, state.progress, 1, (1 - state.progress) * 240 + 80, () =>
           commitFlip(state.dir!)
@@ -388,7 +392,6 @@ function ReaderContent() {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
         onPointerCancel={handlePointerCancel}
-        onPointerLeave={handlePointerCancel}
       >
         <div className="stage-ambient" />
 
