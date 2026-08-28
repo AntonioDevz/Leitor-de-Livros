@@ -282,9 +282,10 @@ function ReaderContent() {
       }
       const flipped = state.progress > 0.22;
       const dt = Math.max(1, performance.now() - g.lastT);
-      const vx = Math.abs(g.startX - e.clientX) / dt; // px per ms
-      // a fast intentional flick turns the page even if the drag was short
-      const isFlick = Math.abs(g.startX - e.clientX) > 40 && vx > 0.45;
+      const movedPx = Math.abs(g.startX - e.clientX);
+      const vx = movedPx / dt; // px per ms
+      // a fast intentional flick turns the page even if the drag was short (but not a nudge)
+      const isFlick = movedPx > Math.max(48, g.width * 0.08) && vx > 0.35;
       if (flipped || isFlick) {
         animateFlip(state.dir, state.progress, 1, (1 - state.progress) * 240 + 80, () =>
           commitFlip(state.dir!)
