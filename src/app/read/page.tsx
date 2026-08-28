@@ -353,7 +353,6 @@ function ReaderContent() {
       ? book.pages[reader.currentPage]
       : book.pages[reader.currentPage - 2]
     : singleCurrent;
-  const flipBack = flipActive ? (isForward ? book.pages[reader.currentPage] : book.pages[reader.currentPage - 2]) : null;
 
   return (
     <div
@@ -422,30 +421,43 @@ function ReaderContent() {
         {book.pages.length > 0 && pageMode === 'single' && (
           <div className="flip-scene relative w-full h-full flex items-center justify-center" data-reader="true">
             <div
-              className="book-block relative page-block-edge"
+              className="book-block relative overflow-hidden"
               style={{ width: singleBlockWidth, height: '100%', maxHeight: '100%', borderRadius: radius, color: theme.foreground }}
             >
-              {/* Base page (revealed beneath the turning sheet) */}
+              {/* Static current page (the portion that is not peeled yet) */}
               <div className="absolute inset-0" style={{ borderRadius: radius, background: theme.background, boxShadow: '0 2px 6px rgba(0,0,0,0.1), 0 22px 48px rgba(0,0,0,0.22)' }}>
-                {singleBase && <PageContent page={singleBase} settings={reader.settings} theme={theme} />}
-                {flipActive && (
+                {singleCurrent && <PageContent page={singleCurrent} settings={reader.settings} theme={theme} />}
+              </div>
+
+              {/* Revealed target page beneath the peeled band (creep follows the finger) */}
+              {flipActive && singleBase && (
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    borderRadius: radius,
+                    background: theme.background,
+                    clipPath: isForward
+                      ? `inset(0px 0px 0px ${(1 - flip.progress) * 100}%)` // reveal the right slice of the next page
+                      : `inset(0px ${(1 - flip.progress) * 100}% 0px 0px)`, // reveal the left slice of the previous page
+                  }}
+                >
+                  <PageContent page={singleBase} settings={reader.settings} theme={theme} />
                   <div
                     className="under-shade"
                     style={{
                       background: isForward
-                        ? `linear-gradient(to right, transparent 55%, rgba(0,0,0,${0.22 * flip.progress}) 100%)`
-                        : `linear-gradient(to left, transparent 55%, rgba(0,0,0,${0.22 * flip.progress}) 100%)`,
+                        ? `linear-gradient(to right, transparent 40%, rgba(0,0,0,${0.16 * flip.progress}) 100%)`
+                        : `linear-gradient(to left, transparent 40%, rgba(0,0,0,${0.16 * flip.progress}) 100%)`,
                       zIndex: 2,
                     }}
                   />
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Turning sheet */}
+              {/* Turning sheet: a band peeled off the current page, fold crease under the finger */}
               {flipActive && singleCurrent && (
                 <PageFlipSheet
                   front={singleCurrent}
-                  back={flipBack}
                   direction={flip.dir as FlipDir}
                   progress={flip.progress}
                   lift={flip.lift}
