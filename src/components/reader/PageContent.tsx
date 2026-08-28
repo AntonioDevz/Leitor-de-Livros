@@ -14,7 +14,7 @@ interface PageContentProps {
   onFit?: (scale: number) => void;
 }
 
-const MIN_FIT = 0.45;
+const MIN_FIT = 0.28;
 
 /**
  * Renders a book page and AUTO-FITS it inside its box: if the text is taller
