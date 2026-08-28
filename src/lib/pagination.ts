@@ -154,6 +154,7 @@ export function paginateBook(
   const sourceFirstPage = new Map<number, number>();
   let cur: PageContent[] = [];
   let used = 0;
+  let pageHasContent = false;
   let curText = '';
   let curType: 'text' | 'quote' = 'text';
 
@@ -174,14 +175,16 @@ export function paginateBook(
     if (cur.length) pages.push(cur);
     cur = [];
     used = 0;
+    pageHasContent = false;
   };
 
   for (const piece of pieces) {
     if (piece.kind === 'flow') {
       for (let i = 0; i < piece.lines.length; i++) {
         const li = piece.lines[i];
-        if (cur.length && used + li.h > target) closePage();
+        if (pageHasContent && used + li.h > target) closePage();
         noteSource(piece.source);
+        pageHasContent = true;
         curText = curText ? curText + ' ' + li.text : li.text;
         used += li.h;
       }
@@ -191,8 +194,9 @@ export function paginateBook(
       curType = 'text';
     } else {
       const total = piece.lines.reduce((s, l) => s + l.h, 0) + piece.gap;
-      if (cur.length && used + total > target) closePage();
+      if (pageHasContent && used + total > target) closePage();
       noteSource(piece.source);
+      pageHasContent = true;
       flushFrag();
       cur.push({
         type: 'heading',
