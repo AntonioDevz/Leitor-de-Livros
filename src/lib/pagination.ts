@@ -31,7 +31,7 @@ export interface PaginationResult {
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 interface Piece {
-  kind: 'flow' | 'group';
+  kind: 'flow' | 'group' | 'image';
   source: number;
   type: 'text' | 'heading' | 'quote';
   level?: number;
@@ -39,6 +39,10 @@ interface Piece {
   lines: { text: string; h: number }[];
   /** vertical space AFTER the whole piece (paragraph margin / heading margins) */
   gap: number;
+  /** image pieces */
+  src?: string;
+  alt?: string;
+  height?: number;
 }
 
 function sliceText(text: string, charsPerLine: number): string[] {
@@ -145,6 +149,25 @@ export function paginateBook(
           pieces.push({ kind: 'flow', source: src.pageNumber, type: 'text', lines, gap: paraGap });
           break;
         }
+        case 'image': {
+          const height = Math.min(Math.max(180, opts.viewportH * 0.35), 420);
+          pieces.push({
+            kind: 'image',
+            source: src.pageNumber,
+            type: 'text',
+            lines: [],
+            gap: 0,
+            src: block.src || '',
+            alt: block.alt || '',
+            height,
+          });
+          break;
+        }
+        case 'note': {
+          const lines = sliceText(block.text || '', charsPerLine).map((text) => ({ text, h: lineH }));
+          pieces.push({ kind: 'flow', source: src.pageNumber, type: 'text', lines, gap: paraGap });
+          break;
+        }
       }
     }
   }
@@ -192,6 +215,14 @@ export function paginateBook(
       curType = piece.type === 'quote' ? 'quote' : 'text';
       flushFrag();
       curType = 'text';
+    } else if (piece.kind === 'image') {
+      const height = piece.height ?? 240;
+      if (pageHasContent && used + height > target) closePage();
+      noteSource(piece.source);
+      pageHasContent = true;
+      flushFrag();
+      cur.push({ type: 'image', src: piece.src, alt: piece.alt });
+      used += height;
     } else {
       const total = piece.lines.reduce((s, l) => s + l.h, 0) + piece.gap;
       if (pageHasContent && used + total > target) closePage();

@@ -99,7 +99,7 @@ function extractChapters(pages: { pageNumber: number; text: string }[]): Chapter
   return chapters;
 }
 
-function buildPageHtml(content: PageContent[]): string {
+export function buildPageHtml(content: PageContent[]): string {
   return content
     .map((item) => {
       switch (item.type) {
@@ -121,7 +121,7 @@ function buildPageHtml(content: PageContent[]): string {
     .join('\n');
 }
 
-function getPaginationOptions(): PaginationOptions {
+export function getPaginationOptions(): PaginationOptions {
   let s = defaultReaderSettings;
   if (typeof window !== 'undefined') {
     try {
@@ -199,6 +199,7 @@ export async function convertToBook(
     conversionMode,
     fileSize: originalFileSize,
     processingTime: 0,
+    paginationVersion: 1,
   };
 
   onProgress?.('Preparando livro digital');

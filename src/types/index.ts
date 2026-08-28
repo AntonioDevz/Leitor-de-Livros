@@ -50,6 +50,8 @@ export interface BookMetadata {
   conversionMode: 'reflow' | 'preservation';
   fileSize: number;
   processingTime: number;
+  /** 1 = paginated into screen-sized pages (bd2dafd+). Absent on legacy books. */
+  paginationVersion?: number;
 }
 
 export interface ReadingProgress {
