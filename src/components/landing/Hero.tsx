@@ -158,7 +158,7 @@ export default function Hero() {
             </div>
 
             {/* Floating resume badge */}
-            <div className="absolute -bottom-5 -left-4 sm:-left-6 rounded-xl bg-[#211d18] text-[#f3e8cf] pl-4 pr-5 py-3 shadow-[0_16px_40px_rgba(33,29,24,0.35)] flex items-center gap-2.5 text-[13px] font-medium">
+            <div className="absolute -bottom-5 -left-2 sm:-left-6 rounded-xl bg-[#211d18] text-[#f3e8cf] pl-4 pr-5 py-3 shadow-[0_16px_40px_rgba(33,29,24,0.35)] flex items-center gap-2.5 text-[13px] font-medium">
               <svg className="w-4 h-4 text-[#d9a441]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
