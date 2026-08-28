@@ -25,6 +25,8 @@ interface FlipState {
   lift: number;
 }
 
+type FitScales = Record<string, number>;
+
 function ReaderContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -43,6 +45,17 @@ function ReaderContent() {
   const animFrameRef = useRef<number | null>(null);
   const flipStateRef = useRef(flip);
   flipStateRef.current = flip;
+  const [fitScales, setFitScales] = useState<FitScales>({});
+  const fitScalesRef = useRef<FitScales>({});
+  const fullscreenRequestedRef = useRef(false);
+
+  const setPageFit = useCallback((pageId: string, scale: number) => {
+    const prev = fitScalesRef.current;
+    if (Math.abs((prev[pageId] ?? 1) - scale) < 0.001) return;
+    const next = { ...prev, [pageId]: scale };
+    fitScalesRef.current = next;
+    setFitScales(next);
+  }, []);
 
   const reader = useReader(book);
 
@@ -141,6 +154,22 @@ function ReaderContent() {
     }
   }, []);
 
+  // First reading gesture enters fullscreen automatically so the browser
+  // search/address bar disappears and the book fills the whole screen.
+  const maybeRequestFullscreen = useCallback(() => {
+    if (fullscreenRequestedRef.current || typeof document === 'undefined') return;
+    if (!document.fullscreenEnabled || document.fullscreenElement) return;
+    const touch = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+    const narrow = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (!touch && !narrow) return;
+    fullscreenRequestedRef.current = true;
+    window.setTimeout(() => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+      }
+    }, 120);
+  }, []);
+
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFsChange);
@@ -162,11 +191,13 @@ function ReaderContent() {
         case 'ArrowRight':
         case 'PageDown':
           e.preventDefault();
+          maybeRequestFullscreen();
           triggerFlip('next');
           break;
         case 'ArrowLeft':
         case 'PageUp':
           e.preventDefault();
+          maybeRequestFullscreen();
           triggerFlip('prev');
           break;
         case 'Home':
@@ -184,7 +215,7 @@ function ReaderContent() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerFlip, reader, showSettings, sidebarTab]);
+  }, [triggerFlip, reader, showSettings, sidebarTab, maybeRequestFullscreen]);
 
   // ---------- Pointer gesture engine (drag-to-turn like a real book) ----------
 
@@ -199,6 +230,7 @@ function ReaderContent() {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       if (reader.settings.pageMode === 'scroll') return;
       if (isInteractiveTarget(e.target)) return;
+      maybeRequestFullscreen();
       stopFlipAnim();
       const stage = stageRef.current;
       const width = stage?.getBoundingClientRect().width || 0;
@@ -300,7 +332,7 @@ function ReaderContent() {
         );
       }
     },
-    [triggerFlip, toggleControls, animateFlip, commitFlip]
+    [triggerFlip, toggleControls, animateFlip, commitFlip, maybeRequestFullscreen]
   );
 
   const handlePointerCancel = useCallback(() => {
@@ -429,7 +461,15 @@ function ReaderContent() {
             >
               {/* Static current page (the portion that is not peeled yet) */}
               <div className="absolute inset-0" style={{ borderRadius: radius, background: theme.background, boxShadow: '0 2px 6px rgba(0,0,0,0.1), 0 22px 48px rgba(0,0,0,0.22)' }}>
-                {singleCurrent && <PageContent page={singleCurrent} settings={reader.settings} theme={theme} />}
+                {singleCurrent && (
+                  <PageContent
+                    page={singleCurrent}
+                    settings={reader.settings}
+                    theme={theme}
+                    fitMode="auto"
+                    onFit={(s) => setPageFit(singleCurrent.id, s)}
+                  />
+                )}
               </div>
 
               {/* Revealed target page beneath the peeled band (creep follows the finger) */}
@@ -444,7 +484,13 @@ function ReaderContent() {
                       : `inset(0px ${(1 - flip.progress) * 100}% 0px 0px)`, // reveal the left slice of the previous page
                   }}
                 >
-                  <PageContent page={singleBase} settings={reader.settings} theme={theme} />
+                  <PageContent
+                    page={singleBase}
+                    settings={reader.settings}
+                    theme={theme}
+                    fitMode="auto"
+                    onFit={(s) => setPageFit(singleBase.id, s)}
+                  />
                   <div
                     className="under-shade"
                     style={{
@@ -466,6 +512,7 @@ function ReaderContent() {
                   lift={flip.lift}
                   settings={reader.settings}
                   theme={theme}
+                  fitScale={fitScales[singleCurrent?.id] ?? 1}
                 />
               )}
             </div>
@@ -481,7 +528,13 @@ function ReaderContent() {
                   style={{ width: `min(${reader.settings.contentWidth / 2}px, 46vw)`, borderRadius: '12px 4px 4px 12px', color: theme.foreground }}
                 >
                   {book.pages[reader.currentPage - 2] && (
-                    <PageContent page={book.pages[reader.currentPage - 2]} settings={reader.settings} theme={theme} />
+                    <PageContent
+                      page={book.pages[reader.currentPage - 2]}
+                      settings={reader.settings}
+                      theme={theme}
+                      fitMode="auto"
+                      onFit={(s) => setPageFit(book.pages[reader.currentPage - 2]!.id, s)}
+                    />
                   )}
                 </div>
               )}
@@ -490,7 +543,13 @@ function ReaderContent() {
                 style={{ width: `min(${reader.settings.contentWidth / 2}px, 46vw)`, borderRadius: '4px 12px 12px 4px', color: theme.foreground }}
               >
                 {book.pages[reader.currentPage - 1] && (
-                  <PageContent page={book.pages[reader.currentPage - 1]} settings={reader.settings} theme={theme} />
+                  <PageContent
+                    page={book.pages[reader.currentPage - 1]}
+                    settings={reader.settings}
+                    theme={theme}
+                    fitMode="auto"
+                    onFit={(s) => setPageFit(book.pages[reader.currentPage - 1]!.id, s)}
+                  />
                 )}
               </div>
               {reader.currentPage > 1 && <div className="book-spread__gutter" />}

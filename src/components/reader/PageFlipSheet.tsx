@@ -10,6 +10,8 @@ interface PageFlipSheetProps {
   lift?: number; // vertical offset following the finger while dragging
   settings: ReaderSettings;
   theme: ThemeConfig;
+  /** Shared auto-fit scale for `front` so the sheet matches the static layer. */
+  fitScale?: number;
 }
 
 /**
@@ -29,6 +31,7 @@ export default function PageFlipSheet({
   lift = 0,
   settings,
   theme,
+  fitScale,
 }: PageFlipSheetProps) {
   const clamp01 = Math.max(0, Math.min(1, progress));
   const forward = direction === 'next';
@@ -103,7 +106,7 @@ export default function PageFlipSheet({
         }}
       >
         <div className="absolute inset-y-0 right-0" style={{ width: `${(1 / Math.max(0.001, clamp01)) * 100}%`, maxWidth: 'none' }}>
-          <PageContent page={front} settings={settings} theme={theme} />
+          <PageContent page={front} settings={settings} theme={theme} fitScale={fitScale} />
         </div>
 
         {/* paper grain / light on the sheet */}
@@ -143,7 +146,7 @@ export default function PageFlipSheet({
         }}
       >
         <div className="absolute inset-y-0 right-0" style={{ width: `${(1 / Math.max(0.001, clamp01)) * 100}%`, maxWidth: 'none' }}>
-          <PageContent page={front} settings={settings} theme={theme} />
+          <PageContent page={front} settings={settings} theme={theme} fitScale={fitScale} />
         </div>
 
         <div
