@@ -16,7 +16,7 @@ function textToContent(text: string): PageContent[] {
       content.push({
         type: 'heading',
         level: chapterInfo.level,
-        text: chapterInfo.title,
+        text: trimmed,
       });
       continue;
     }
@@ -97,37 +97,72 @@ function extractChapters(pages: { pageNumber: number; text: string }[]): Chapter
   return chapters;
 }
 
-function buildBookPages(processed: ProcessedPdf): BookPage[] {
-  return processed.pages.map((page) => {
-    const content = textToContent(page.text);
-    const html = content
-      .map((item) => {
-        switch (item.type) {
-          case 'heading':
-            const tag = item.level === 1 ? 'h2' : item.level === 2 ? 'h3' : 'h4';
-            return `<${tag} class="book-heading book-heading-${item.level}">${item.text}</${tag}>`;
-          case 'text':
-            return `<p class="book-paragraph">${item.text}</p>`;
-          case 'quote':
-            return `<blockquote class="book-quote">${item.text}</blockquote>`;
-          case 'list':
-            return `<ul class="book-list">${(item.items || []).map((i) => `<li>${i}</li>`).join('')}</ul>`;
-          case 'image':
-            return `<figure class="book-figure"><img src="${item.src}" alt="${item.alt || ''}" /></figure>`;
-          default:
-            return `<p>${item.text || ''}</p>`;
-        }
-      })
-      .join('\n');
+function buildPageHtml(content: PageContent[]): string {
+  return content
+    .map((item) => {
+      switch (item.type) {
+        case 'heading':
+          const tag = item.level === 1 ? 'h2' : item.level === 2 ? 'h3' : 'h4';
+          return `<${tag} class="book-heading book-heading-${item.level}">${item.text}</${tag}>`;
+        case 'text':
+          return `<p class="book-paragraph">${item.text}</p>`;
+        case 'quote':
+          return `<blockquote class="book-quote">${item.text}</blockquote>`;
+        case 'list':
+          return `<ul class="book-list">${(item.items || []).map((i) => `<li>${i}</li>`).join('')}</ul>`;
+        case 'image':
+          return `<figure class="book-figure"><img src="${item.src}" alt="${item.alt || ''}" /></figure>`;
+        default:
+          return `<p>${item.text || ''}</p>`;
+      }
+    })
+    .join('\n');
+}
 
-    return {
+function isHeadingOnly(content: PageContent[]): boolean {
+  return content.length > 0 && content.every((c) => c.type === 'heading');
+}
+
+function buildBookPages(processed: ProcessedPdf): { pages: BookPage[]; origToNew: Map<number, number> } {
+  const pages: BookPage[] = [];
+  const origToNew = new Map<number, number>();
+  const pendingHeadings: PageContent[] = [];
+  const pendingOrigins: number[] = [];
+
+  const emit = (origins: number[], content: PageContent[]) => {
+    const pageNumber = pages.length + 1;
+    for (const o of origins) origToNew.set(o, pageNumber);
+    pages.push({
       id: generateId(),
-      pageNumber: page.pageNumber,
+      pageNumber,
       content,
-      html,
-      hasImages: page.hasImages,
-    };
-  });
+      html: buildPageHtml(content),
+      hasImages: false,
+    });
+  };
+
+  for (const page of processed.pages) {
+    const content = textToContent(page.text);
+    if (isHeadingOnly(content)) {
+      // "CAPÍTULO 1 · Título" alone on a PDF page: fold it into the body page
+      pendingHeadings.push(...content);
+      pendingOrigins.push(page.pageNumber);
+      continue;
+    }
+
+    const origins = pendingOrigins.length ? pendingOrigins : [page.pageNumber];
+    const combined = pendingHeadings.length ? [...pendingHeadings, ...content] : content;
+    emit(origins, combined);
+    pendingHeadings.length = 0;
+    pendingOrigins.length = 0;
+  }
+
+  // trailing opener page(s): keep them as their own page(s)
+  if (pendingHeadings.length) {
+    emit(pendingOrigins, pendingHeadings);
+  }
+
+  return { pages, origToNew };
 }
 
 export async function convertToBook(
@@ -141,7 +176,13 @@ export async function convertToBook(
   const chapters = extractChapters(processed.pages);
 
   onProgress?.('Criando páginas');
-  const pages = buildBookPages(processed);
+  const { pages, origToNew } = buildBookPages(processed);
+
+  // remap chapter pointers: opener pages that were folded into the body page
+  for (const ch of chapters) {
+    const remapped = origToNew.get(ch.pageNumber);
+    if (remapped) ch.pageNumber = remapped;
+  }
 
   onProgress?.('Otimizando conteúdo');
 

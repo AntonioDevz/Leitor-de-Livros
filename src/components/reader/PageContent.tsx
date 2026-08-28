@@ -142,6 +142,8 @@ export default function PageContent({
           <div
             dangerouslySetInnerHTML={{ __html: page.html }}
             style={{
+              overflowWrap: 'anywhere',
+              minWidth: 0,
               '--reader-font': settings.fontFamily,
               '--reader-font-size': `${settings.fontSize}px`,
               '--reader-font-weight': settings.fontWeight,
@@ -154,8 +156,13 @@ export default function PageContent({
         </div>
         <div
           ref={footerRef}
-          className="mt-6 pt-3 text-center flex items-center justify-center gap-2.5"
-          style={{ borderTop: `1px solid ${theme.border}`, color: theme.muted, flexShrink: 0 }}
+          className="pt-3 text-center flex items-center justify-center gap-2.5"
+          style={{
+            borderTop: `1px solid ${theme.border}`,
+            color: theme.muted,
+            marginTop: 'auto',
+            flexShrink: 0,
+          }}
         >
           <span className="w-6 h-px" style={{ background: theme.border }} />
           <span className="text-xs opacity-60 tabular-nums">{page.pageNumber}</span>
